@@ -1,0 +1,37 @@
+name: Rule Change
+description: Propose or refine a React Native engineering rule.
+title: "[Rule]: "
+labels:
+  - spec
+body:
+  - type: dropdown
+    id: chapter
+    attributes:
+      label: Rule chapter
+      options:
+        - architecture
+        - navigation
+        - state
+        - api
+        - ui
+        - accessibility
+        - performance
+        - security
+        - testing
+        - release
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What bad AI-generated behavior should this rule prevent?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should the rule require?
+    validations:
+      required: true

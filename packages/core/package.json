@@ -1,0 +1,13 @@
+{
+  "name": "@react-native-vibe-spec/core",
+  "version": "0.1.0",
+  "description": "Core checks and generators for react-native-vibe-spec.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "license": "MIT"
+}

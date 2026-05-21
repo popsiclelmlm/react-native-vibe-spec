@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://react-native-vibe-spec.dev/schema/feature-spec-v0.1.json",
+  "title": "React Native Vibe Feature Spec",
+  "type": "object",
+  "required": [
+    "title",
+    "userOutcome",
+    "platforms",
+    "uxStates",
+    "acceptanceCriteria"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "userOutcome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platforms": {
+      "type": "object",
+      "required": ["ios", "android"],
+      "additionalProperties": false,
+      "properties": {
+        "ios": {
+          "enum": ["required", "optional", "not-supported"]
+        },
+        "android": {
+          "enum": ["required", "optional", "not-supported"]
+        },
+        "web": {
+          "enum": ["required", "optional", "not-supported"]
+        }
+      }
+    },
+    "uxStates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "navigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "addsRoutes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "updatesRoutes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "redirects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deepLinks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dataContracts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "request": {
+            "type": "string"
+          },
+          "response": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "local": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "secure": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "neverStore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "unit": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "integration": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "e2e": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "accessibility": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "security": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  }
+}

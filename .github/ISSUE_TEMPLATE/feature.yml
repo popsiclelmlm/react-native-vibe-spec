@@ -1,0 +1,27 @@
+name: Feature
+description: Propose a spec, rule, CLI, or package feature.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User outcome
+      description: What should a React Native developer or AI agent be able to do?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Which spec, template, rule, package, or command changes?
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Acceptance checks
+      description: How should this be validated?
+    validations:
+      required: true

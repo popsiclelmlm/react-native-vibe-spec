@@ -1,0 +1,27 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .: {}
+
+  packages/agents: {}
+
+  packages/cli:
+    dependencies:
+      '@react-native-vibe-spec/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/core: {}
+
+  packages/doctor: {}
+
+  packages/eslint-config: {}
+
+  packages/mcp-server: {}
+
+  packages/tsconfig: {}

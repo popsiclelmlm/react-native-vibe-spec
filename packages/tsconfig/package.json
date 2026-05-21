@@ -1,0 +1,13 @@
+{
+  "name": "@react-native-vibe-spec/tsconfig",
+  "version": "0.1.0",
+  "description": "TypeScript config presets for React Native Vibe Spec projects.",
+  "type": "module",
+  "exports": {
+    "./react-native": "./react-native.json"
+  },
+  "files": [
+    "react-native.json"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@react-native-vibe-spec/eslint-config",
+  "version": "0.1.0",
+  "description": "ESLint defaults for React Native Vibe Spec projects.",
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "peerDependencies": {
+    "eslint": ">=9"
+  },
+  "files": [
+    "index.js"
+  ],
+  "license": "MIT"
+}

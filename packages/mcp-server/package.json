@@ -1,0 +1,13 @@
+{
+  "name": "@react-native-vibe-spec/mcp-server",
+  "version": "0.1.0",
+  "description": "Planned MCP server for exposing React Native Vibe Spec tools to AI agents.",
+  "type": "module",
+  "bin": {
+    "rnvibe-mcp": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "license": "MIT"
+}

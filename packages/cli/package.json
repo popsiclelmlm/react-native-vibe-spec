@@ -1,0 +1,17 @@
+{
+  "name": "react-native-vibe-spec",
+  "version": "0.1.0",
+  "description": "Spec-first React Native engineering toolkit for AI coding agents.",
+  "type": "module",
+  "bin": {
+    "rnvibe": "./bin/rnvibe.js",
+    "react-native-vibe-spec": "./bin/rnvibe.js"
+  },
+  "dependencies": {
+    "@react-native-vibe-spec/core": "workspace:*"
+  },
+  "files": [
+    "bin"
+  ],
+  "license": "MIT"
+}

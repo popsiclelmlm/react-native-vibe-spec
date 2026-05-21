@@ -1,0 +1,13 @@
+{
+  "name": "@react-native-vibe-spec/doctor",
+  "version": "0.1.0",
+  "description": "Deeper React Native diagnostics for react-native-vibe-spec.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "license": "MIT"
+}

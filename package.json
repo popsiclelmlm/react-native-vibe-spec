@@ -1,0 +1,23 @@
+{
+  "name": "react-native-vibe-spec-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "lint": "node --check packages/core/src/index.js && node --check packages/cli/bin/rnvibe.js && node --check packages/eslint-config/index.js && node --check packages/mcp-server/src/index.js",
+    "typecheck": "node --check packages/core/src/index.js && node --check packages/cli/bin/rnvibe.js",
+    "test": "node --test packages/core/test/*.test.js",
+    "check": "node packages/cli/bin/rnvibe.js check",
+    "rnvibe": "node packages/cli/bin/rnvibe.js"
+  },
+  "keywords": [
+    "react-native",
+    "ai",
+    "agents",
+    "spec-first",
+    "cli",
+    "mobile"
+  ],
+  "license": "MIT"
+}

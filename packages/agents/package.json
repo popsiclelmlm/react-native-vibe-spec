@@ -1,0 +1,10 @@
+{
+  "name": "@react-native-vibe-spec/agents",
+  "version": "0.1.0",
+  "description": "Agent instruction pack for react-native-vibe-spec.",
+  "type": "module",
+  "files": [
+    "README.md"
+  ],
+  "license": "MIT"
+}

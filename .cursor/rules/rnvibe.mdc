@@ -1,0 +1,8 @@
+---
+description: React Native Vibe Spec repository rules
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+Follow `AGENTS.md`. Keep this repository focused on React Native AI engineering specs, validation, and agent instructions.
