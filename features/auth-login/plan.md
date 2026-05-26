@@ -14,10 +14,18 @@
 
 ## State Model
 
+- State library or framework:
 - Server state:
 - Client state:
 - Form state:
 - Persisted state:
+- Ownership boundaries:
+- Mutation boundaries:
+- Selectors or derivations:
+- Async flow, retries, and cancellation:
+- Optimistic updates and rollback:
+- Logging, analytics, and redaction:
+- Security constraints:
 
 ## API and Data Flow
 

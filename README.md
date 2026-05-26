@@ -20,6 +20,7 @@ This project is not another app generator or boilerplate. It gives AI agents a p
 - ESLint and TypeScript preset packages
 - Agent instruction package and planned MCP server
 - Example specs for Expo apps, bare React Native apps, native modules, and design systems
+- State/data-flow guidance and examples for Redux Toolkit, Zustand, and MobX
 
 ## Quick Start
 
@@ -52,6 +53,19 @@ npx --yes pnpm@9.15.0 install
 5. Validate with typecheck, lint, tests, security checks, and platform review.
 6. Review the diff against the spec.
 7. Release with versioning, rollback, and observability notes.
+
+## State And Data Flow Coverage
+
+The spec does not force one state architecture, but it does force every feature to declare:
+
+- State ownership by layer
+- Mutation boundaries
+- Persistence policy
+- Selectors or derivations
+- Async flow, cancellation, and rollback
+- Logging, redaction, and security constraints
+
+Framework-specific examples live in `spec/examples/` for Redux Toolkit, Zustand, and MobX so agents can follow concrete patterns without turning the project into a boilerplate.
 
 ## CLI
 

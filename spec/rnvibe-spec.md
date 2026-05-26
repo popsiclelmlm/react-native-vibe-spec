@@ -52,7 +52,9 @@ A compliant feature spec must name:
 - Optional web behavior
 - Navigation and deep-link impact
 - Data contracts
+- State library or framework choice
 - Client, server, form, and persisted state boundaries
+- Mutation boundaries, selectors or derivations, async flow, rollback, logging, and security constraints for stateful behavior
 - Offline, loading, error, empty, and permission-denied states when relevant
 - Secure storage and cache behavior
 - Required tests

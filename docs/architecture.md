@@ -19,3 +19,4 @@ This repository is a tooling and specification monorepo.
 - Avoid external runtime dependencies until a feature clearly needs one.
 - Keep templates versionable and readable as standalone markdown.
 - Do not couple the spec to one React Native app architecture.
+- Keep state-management guidance framework-specific in examples and rules, not hard-coded into a single project template.

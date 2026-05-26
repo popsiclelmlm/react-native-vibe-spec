@@ -32,6 +32,18 @@ Describe the user-visible outcome in one or two sentences.
 - Response shape:
 - Error shape:
 
+## State and Data Flow
+
+- State library or framework:
+- State ownership by layer:
+- Mutation boundaries:
+- Persistence policy:
+- Selectors or derivations:
+- Async flow and cancellation:
+- Optimistic updates and rollback:
+- Logging and redaction constraints:
+- Security constraints:
+
 ## Storage
 
 - Local storage:

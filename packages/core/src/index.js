@@ -34,6 +34,30 @@ const TEXT_EXTENSIONS = new Set([
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
+const FEATURE_SPEC_STATE_REQUIREMENTS = [
+  "## State and Data Flow",
+  "- State library or framework:",
+  "- State ownership by layer:",
+  "- Mutation boundaries:",
+  "- Persistence policy:",
+  "- Selectors or derivations:",
+  "- Async flow and cancellation:",
+  "- Optimistic updates and rollback:",
+  "- Logging and redaction constraints:",
+  "- Security constraints:"
+];
+
+const TECHNICAL_PLAN_STATE_REQUIREMENTS = [
+  "- State library or framework:",
+  "- Ownership boundaries:",
+  "- Mutation boundaries:",
+  "- Selectors or derivations:",
+  "- Async flow, retries, and cancellation:",
+  "- Optimistic updates and rollback:",
+  "- Logging, analytics, and redaction:",
+  "- Security constraints:"
+];
+
 export const BUILTIN_TEMPLATES = {
   agents: `# AGENTS.md
 
@@ -127,6 +151,18 @@ Describe the user-visible outcome in one or two sentences.
 - Response shape:
 - Error shape:
 
+## State and Data Flow
+
+- State library or framework:
+- State ownership by layer:
+- Mutation boundaries:
+- Persistence policy:
+- Selectors or derivations:
+- Async flow and cancellation:
+- Optimistic updates and rollback:
+- Logging and redaction constraints:
+- Security constraints:
+
 ## Storage
 
 - Local storage:
@@ -171,10 +207,18 @@ Describe the user-visible outcome in one or two sentences.
 
 ## State Model
 
+- State library or framework:
 - Server state:
 - Client state:
 - Form state:
 - Persisted state:
+- Ownership boundaries:
+- Mutation boundaries:
+- Selectors or derivations:
+- Async flow, retries, and cancellation:
+- Optimistic updates and rollback:
+- Logging, analytics, and redaction:
+- Security constraints:
 
 ## API and Data Flow
 
@@ -208,6 +252,7 @@ Describe the data flow from user action to UI update.
 
 - [ ] Confirm feature spec and technical plan are complete.
 - [ ] Add or update types and data contracts.
+- [ ] Confirm state ownership, mutation boundaries, persistence, selectors, async flow, rollback, logging, and security constraints.
 - [ ] Implement UI states.
 - [ ] Implement data fetching or persistence.
 - [ ] Add error, offline, and empty states.
@@ -417,6 +462,34 @@ export function checkProject(root = process.cwd()) {
     8
   );
 
+  const templateCoverageIssues = [
+    ...findMissingMarkers(path.join(root, "templates/feature-spec.md"), FEATURE_SPEC_STATE_REQUIREMENTS),
+    ...findMissingMarkers(path.join(root, "templates/technical-plan.md"), TECHNICAL_PLAN_STATE_REQUIREMENTS)
+  ];
+  add(
+    "state-template-coverage",
+    "State/data-flow template coverage",
+    templateCoverageIssues.length === 0 ? "pass" : "fail",
+    templateCoverageIssues.length === 0
+      ? "Feature spec and technical plan templates include required state/data-flow fields."
+      : templateCoverageIssues.join("; "),
+    8
+  );
+
+  const featureStateCoverageIssues = [
+    ...collectMissingMarkers(root, findFeatureArtifactFiles(root, "spec.md"), FEATURE_SPEC_STATE_REQUIREMENTS),
+    ...collectMissingMarkers(root, findFeatureArtifactFiles(root, "plan.md"), TECHNICAL_PLAN_STATE_REQUIREMENTS)
+  ];
+  add(
+    "state-spec-coverage",
+    "Feature state/data-flow coverage",
+    featureStateCoverageIssues.length === 0 ? "pass" : "warn",
+    featureStateCoverageIssues.length === 0
+      ? "Project feature specs and plans include required state/data-flow declarations."
+      : featureStateCoverageIssues.join("; "),
+    8
+  );
+
   const missingScripts = ["lint", "typecheck", "test"].filter((script) => !project.scripts[script]);
   add(
     "quality-scripts",
@@ -620,6 +693,29 @@ function findFeatureSpecs(root) {
   });
 }
 
+function findFeatureArtifactFiles(root, fileName) {
+  return walkFiles(root, (relativePath) => {
+    const normalized = relativePath.split(path.sep).join("/");
+    return normalized.startsWith("features/") && normalized.endsWith(`/${fileName}`);
+  });
+}
+
+function collectMissingMarkers(root, relativePaths, markers) {
+  return relativePaths.flatMap((relativePath) =>
+    findMissingMarkers(path.join(root, relativePath), markers).map((marker) => `${relativePath} missing "${marker}"`)
+  );
+}
+
+function findMissingMarkers(filePath, markers) {
+  let text = "";
+  try {
+    text = fs.readFileSync(filePath, "utf8");
+  } catch {
+    return [`${path.basename(filePath)} not found`];
+  }
+  return markers.filter((marker) => !text.includes(marker));
+}
+
 function scanForSecretNames(root) {
   const hits = [];
   const files = walkFiles(root, (relativePath) => TEXT_EXTENSIONS.has(path.extname(relativePath)));
@@ -713,6 +809,8 @@ function actionFor(id) {
     typescript: "Add TypeScript and a strict tsconfig.json.",
     agents: "Run rnvibe init to create AGENTS.md.",
     "feature-specs": "Run rnvibe new feature <name> before implementing new features.",
+    "state-template-coverage": "Update feature and plan templates to require explicit state/data-flow decisions.",
+    "state-spec-coverage": "Add state/data-flow declarations to each feature spec and plan.",
     templates: "Run rnvibe init to restore standard templates.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
