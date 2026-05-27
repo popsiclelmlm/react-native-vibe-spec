@@ -22,6 +22,7 @@ test("initProject creates agent and template files", () => {
   assert.ok(result.created.includes("AGENTS.md"));
   assert.ok(fs.existsSync(path.join(root, ".github/copilot-instructions.md")));
   assert.ok(fs.existsSync(path.join(root, "templates/feature-spec.md")));
+  assert.match(fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8"), /## State and Data Flow/);
 });
 
 test("createFeature writes spec, plan, tasks, and acceptance files", () => {
@@ -56,70 +57,49 @@ test("checkProject reports obvious secret-like public names", () => {
   assert.equal(result.secretHits[0].name, "EXPO_PUBLIC_STRIPE_SECRET_KEY");
 });
 
-test("checkProject validates state/data-flow template and feature coverage", () => {
+test("checkProject warns when detected state library is not documented", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(
     path.join(root, "package.json"),
     JSON.stringify({
-      dependencies: { typescript: "latest" },
+      dependencies: { expo: "latest", typescript: "latest", zustand: "latest" },
       scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
     })
   );
   fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
-  fs.mkdirSync(path.join(root, "templates"), { recursive: true });
-  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.mkdirSync(path.join(root, "features/profile"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/profile/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, "docs"), { recursive: true });
+  fs.writeFileSync(path.join(root, "docs/architecture.md"), "# Architecture\n\n- State: \n");
+
+  const result = checkProject(root);
+  const stateCheck = result.checks.find((check) => check.id === "state-data-flow");
+
+  assert.equal(stateCheck.status, "warn");
+  assert.match(stateCheck.details, /Zustand/);
+});
+
+test("checkProject passes when detected state library is documented", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(
-    path.join(root, "templates/feature-spec.md"),
-    `# Feature Spec
-
-## State and Data Flow
-
-- State library or framework:
-- State ownership by layer:
-- Mutation boundaries:
-- Persistence policy:
-- Selectors or derivations:
-- Async flow and cancellation:
-- Optimistic updates and rollback:
-- Logging and redaction constraints:
-- Security constraints:
-`
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest", "@reduxjs/toolkit": "latest", "react-redux": "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
   );
-  fs.writeFileSync(
-    path.join(root, "templates/technical-plan.md"),
-    `# Technical Plan
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/profile"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/profile/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, "docs"), { recursive: true });
+  fs.writeFileSync(path.join(root, "docs/architecture.md"), "# Architecture\n\n- State: Redux Toolkit owns client app state.\n");
 
-## State Model
+  const result = checkProject(root);
+  const stateCheck = result.checks.find((check) => check.id === "state-data-flow");
 
-- State library or framework:
-- Ownership boundaries:
-- Mutation boundaries:
-- Selectors or derivations:
-- Async flow, retries, and cancellation:
-- Optimistic updates and rollback:
-- Logging, analytics, and redaction:
-- Security constraints:
-`
+  assert.equal(stateCheck.status, "pass");
+  assert.deepEqual(
+    result.project.stateDataLibraries.map((library) => library.name),
+    ["Redux Toolkit"]
   );
-  fs.writeFileSync(path.join(root, "templates/tasks.md"), "# Tasks");
-  fs.writeFileSync(path.join(root, "templates/acceptance-checklist.md"), "# Acceptance");
-  fs.writeFileSync(path.join(root, "templates/pr-review.md"), "# PR");
-  fs.writeFileSync(path.join(root, "templates/release-checklist.md"), "# Release");
-  fs.writeFileSync(
-    path.join(root, "features/auth-login/spec.md"),
-    fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8")
-  );
-  fs.writeFileSync(
-    path.join(root, "features/auth-login/plan.md"),
-    fs.readFileSync(path.join(root, "templates/technical-plan.md"), "utf8")
-  );
-
-  const passing = checkProject(root);
-  assert.equal(passing.checks.find((check) => check.id === "state-template-coverage").status, "pass");
-  assert.equal(passing.checks.find((check) => check.id === "state-spec-coverage").status, "pass");
-
-  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Feature Spec");
-
-  const failing = checkProject(root);
-  assert.equal(failing.checks.find((check) => check.id === "state-spec-coverage").status, "warn");
 });

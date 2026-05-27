@@ -31,6 +31,8 @@
 - TypeScript config preset
 - Security scanner rules
 - PR checklist generator
+- State/data-flow dependency detection
+- Redux Toolkit, Zustand, MobX, and related data-flow spec examples
 
 ## v1.0: Stable Specification
 

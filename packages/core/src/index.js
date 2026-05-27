@@ -34,28 +34,61 @@ const TEXT_EXTENSIONS = new Set([
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
-const FEATURE_SPEC_STATE_REQUIREMENTS = [
-  "## State and Data Flow",
-  "- State library or framework:",
-  "- State ownership by layer:",
-  "- Mutation boundaries:",
-  "- Persistence policy:",
-  "- Selectors or derivations:",
-  "- Async flow and cancellation:",
-  "- Optimistic updates and rollback:",
-  "- Logging and redaction constraints:",
-  "- Security constraints:"
-];
-
-const TECHNICAL_PLAN_STATE_REQUIREMENTS = [
-  "- State library or framework:",
-  "- Ownership boundaries:",
-  "- Mutation boundaries:",
-  "- Selectors or derivations:",
-  "- Async flow, retries, and cancellation:",
-  "- Optimistic updates and rollback:",
-  "- Logging, analytics, and redaction:",
-  "- Security constraints:"
+const STATE_DATA_LIBRARY_DEFINITIONS = [
+  {
+    id: "redux-toolkit",
+    name: "Redux Toolkit",
+    packageNames: ["@reduxjs/toolkit"],
+    terms: ["redux toolkit", "@reduxjs/toolkit", "rtk"]
+  },
+  {
+    id: "redux",
+    name: "Redux",
+    packageNames: ["redux", "react-redux"],
+    terms: ["redux", "react-redux"]
+  },
+  {
+    id: "zustand",
+    name: "Zustand",
+    packageNames: ["zustand"],
+    terms: ["zustand"]
+  },
+  {
+    id: "mobx",
+    name: "MobX",
+    packageNames: ["mobx", "mobx-react", "mobx-react-lite"],
+    terms: ["mobx"]
+  },
+  {
+    id: "tanstack-query",
+    name: "TanStack Query",
+    packageNames: ["@tanstack/react-query", "react-query"],
+    terms: ["tanstack query", "@tanstack/react-query", "react query", "react-query"]
+  },
+  {
+    id: "apollo-client",
+    name: "Apollo Client",
+    packageNames: ["@apollo/client", "apollo-client"],
+    terms: ["apollo", "@apollo/client"]
+  },
+  {
+    id: "jotai",
+    name: "Jotai",
+    packageNames: ["jotai"],
+    terms: ["jotai"]
+  },
+  {
+    id: "recoil",
+    name: "Recoil",
+    packageNames: ["recoil"],
+    terms: ["recoil"]
+  },
+  {
+    id: "xstate",
+    name: "XState",
+    packageNames: ["xstate", "@xstate/react"],
+    terms: ["xstate", "@xstate/react"]
+  }
 ];
 
 export const BUILTIN_TEMPLATES = {
@@ -153,15 +186,15 @@ Describe the user-visible outcome in one or two sentences.
 
 ## State and Data Flow
 
-- State library or framework:
-- State ownership by layer:
-- Mutation boundaries:
-- Persistence policy:
-- Selectors or derivations:
-- Async flow and cancellation:
-- Optimistic updates and rollback:
-- Logging and redaction constraints:
-- Security constraints:
+- State owner:
+- Framework:
+- Mutation boundary:
+- Read boundary:
+- Async flow:
+- Optimistic update and rollback:
+- Persistence and hydration:
+- Reset behavior:
+- Sensitive data that must not be stored or logged:
 
 ## Storage
 
@@ -207,18 +240,15 @@ Describe the user-visible outcome in one or two sentences.
 
 ## State Model
 
-- State library or framework:
 - Server state:
 - Client state:
 - Form state:
 - Persisted state:
-- Ownership boundaries:
-- Mutation boundaries:
-- Selectors or derivations:
-- Async flow, retries, and cancellation:
-- Optimistic updates and rollback:
-- Logging, analytics, and redaction:
-- Security constraints:
+- State/data-flow framework:
+- Mutation boundary:
+- Selectors, hooks, computed values, or cache APIs:
+- Persistence, hydration, migration, and reset:
+- Sensitive data restrictions:
 
 ## API and Data Flow
 
@@ -252,7 +282,6 @@ Describe the data flow from user action to UI update.
 
 - [ ] Confirm feature spec and technical plan are complete.
 - [ ] Add or update types and data contracts.
-- [ ] Confirm state ownership, mutation boundaries, persistence, selectors, async flow, rollback, logging, and security constraints.
 - [ ] Implement UI states.
 - [ ] Implement data fetching or persistence.
 - [ ] Add error, offline, and empty states.
@@ -365,6 +394,14 @@ export function fileExists(root, relativePath) {
   return fs.existsSync(path.join(root, relativePath));
 }
 
+export function readText(root, relativePath) {
+  try {
+    return fs.readFileSync(path.join(root, relativePath), "utf8");
+  } catch {
+    return "";
+  }
+}
+
 export function detectProject(root = process.cwd()) {
   const packageJson = readJson(path.join(root, "package.json"));
   const dependencies = {
@@ -385,6 +422,7 @@ export function detectProject(root = process.cwd()) {
       hasDependency("typescript") ||
       fileExists(root, "tsconfig.json") ||
       fileExists(root, "tsconfig.base.json"),
+    stateDataLibraries: detectStateDataLibraries(dependencies),
     reactNativeVersion: dependencies["react-native"] ?? null,
     expoVersion: dependencies.expo ?? null
   };
@@ -462,34 +500,6 @@ export function checkProject(root = process.cwd()) {
     8
   );
 
-  const templateCoverageIssues = [
-    ...findMissingMarkers(path.join(root, "templates/feature-spec.md"), FEATURE_SPEC_STATE_REQUIREMENTS),
-    ...findMissingMarkers(path.join(root, "templates/technical-plan.md"), TECHNICAL_PLAN_STATE_REQUIREMENTS)
-  ];
-  add(
-    "state-template-coverage",
-    "State/data-flow template coverage",
-    templateCoverageIssues.length === 0 ? "pass" : "fail",
-    templateCoverageIssues.length === 0
-      ? "Feature spec and technical plan templates include required state/data-flow fields."
-      : templateCoverageIssues.join("; "),
-    8
-  );
-
-  const featureStateCoverageIssues = [
-    ...collectMissingMarkers(root, findFeatureArtifactFiles(root, "spec.md"), FEATURE_SPEC_STATE_REQUIREMENTS),
-    ...collectMissingMarkers(root, findFeatureArtifactFiles(root, "plan.md"), TECHNICAL_PLAN_STATE_REQUIREMENTS)
-  ];
-  add(
-    "state-spec-coverage",
-    "Feature state/data-flow coverage",
-    featureStateCoverageIssues.length === 0 ? "pass" : "warn",
-    featureStateCoverageIssues.length === 0
-      ? "Project feature specs and plans include required state/data-flow declarations."
-      : featureStateCoverageIssues.join("; "),
-    8
-  );
-
   const missingScripts = ["lint", "typecheck", "test"].filter((script) => !project.scripts[script]);
   add(
     "quality-scripts",
@@ -508,6 +518,23 @@ export function checkProject(root = process.cwd()) {
     e2eScript ? "pass" : "warn",
     e2eScript ? `Found script: ${e2eScript}` : "Add an E2E command when user flows are implemented.",
     6
+  );
+
+  const architectureText = readText(root, "docs/architecture.md").toLowerCase();
+  const detectedStateLibraries = project.stateDataLibraries;
+  const documentedStateLibraries = detectedStateLibraries.filter((library) =>
+    library.terms.some((term) => architectureText.includes(term))
+  );
+  add(
+    "state-data-flow",
+    "State/data-flow decision documented",
+    detectedStateLibraries.length === 0
+      ? "pass"
+      : documentedStateLibraries.length === detectedStateLibraries.length
+        ? "pass"
+        : "warn",
+    detailsForStateDataFlow(detectedStateLibraries, documentedStateLibraries, fileExists(root, "docs/architecture.md")),
+    7
   );
 
   add(
@@ -681,6 +708,40 @@ function detectPackageManager(root, packageJson) {
   return "unknown";
 }
 
+function detectStateDataLibraries(dependencies) {
+  const hasPackage = (name) => Object.prototype.hasOwnProperty.call(dependencies, name);
+  return STATE_DATA_LIBRARY_DEFINITIONS.filter((definition) => {
+    if (definition.id === "redux" && hasPackage("@reduxjs/toolkit")) {
+      return false;
+    }
+    return definition.packageNames.some(hasPackage);
+  }).map((definition) => ({
+    id: definition.id,
+    name: definition.name,
+    packageNames: definition.packageNames.filter(hasPackage),
+    terms: definition.terms
+  }));
+}
+
+function detailsForStateDataFlow(detected, documented, hasArchitectureDoc) {
+  if (detected.length === 0) {
+    return "No common state/data-flow libraries detected.";
+  }
+
+  const detectedNames = detected.map((library) => library.name).join(", ");
+  if (!hasArchitectureDoc) {
+    return `Detected ${detectedNames}. Add docs/architecture.md and document the state/data-flow decision.`;
+  }
+
+  if (documented.length === detected.length) {
+    return `Detected and documented: ${detectedNames}.`;
+  }
+
+  const documentedIds = new Set(documented.map((library) => library.id));
+  const missing = detected.filter((library) => !documentedIds.has(library.id)).map((library) => library.name);
+  return `Detected ${detectedNames}. Document in docs/architecture.md: ${missing.join(", ")}.`;
+}
+
 function findFeatureSpecs(root) {
   return walkFiles(root, (relativePath) => {
     const normalized = relativePath.split(path.sep).join("/");
@@ -691,29 +752,6 @@ function findFeatureSpecs(root) {
         normalized.startsWith("examples/"))
     );
   });
-}
-
-function findFeatureArtifactFiles(root, fileName) {
-  return walkFiles(root, (relativePath) => {
-    const normalized = relativePath.split(path.sep).join("/");
-    return normalized.startsWith("features/") && normalized.endsWith(`/${fileName}`);
-  });
-}
-
-function collectMissingMarkers(root, relativePaths, markers) {
-  return relativePaths.flatMap((relativePath) =>
-    findMissingMarkers(path.join(root, relativePath), markers).map((marker) => `${relativePath} missing "${marker}"`)
-  );
-}
-
-function findMissingMarkers(filePath, markers) {
-  let text = "";
-  try {
-    text = fs.readFileSync(filePath, "utf8");
-  } catch {
-    return [`${path.basename(filePath)} not found`];
-  }
-  return markers.filter((marker) => !text.includes(marker));
 }
 
 function scanForSecretNames(root) {
@@ -809,11 +847,10 @@ function actionFor(id) {
     typescript: "Add TypeScript and a strict tsconfig.json.",
     agents: "Run rnvibe init to create AGENTS.md.",
     "feature-specs": "Run rnvibe new feature <name> before implementing new features.",
-    "state-template-coverage": "Update feature and plan templates to require explicit state/data-flow decisions.",
-    "state-spec-coverage": "Add state/data-flow declarations to each feature spec and plan.",
     templates: "Run rnvibe init to restore standard templates.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
+    "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",
     security: "Add SECURITY.md or docs/security.md.",
     release: "Add templates/release-checklist.md or docs/release.md.",
     secrets: "Move secret-like values out of bundled code and public env names.",

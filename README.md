@@ -15,12 +15,12 @@ This project is not another app generator or boilerplate. It gives AI agents a p
 - React Native feature spec templates
 - AI agent instructions through `AGENTS.md`
 - Architecture, navigation, state, UI, accessibility, performance, security, testing, and release rules
+- Framework-specific data-flow specs for Redux Toolkit, Zustand, MobX, and related state/data libraries
 - CLI validation with `rnvibe check`
 - Feature workflow scaffolding with `rnvibe new feature`
 - ESLint and TypeScript preset packages
 - Agent instruction package and planned MCP server
 - Example specs for Expo apps, bare React Native apps, native modules, and design systems
-- State/data-flow guidance and examples for Redux Toolkit, Zustand, and MobX
 
 ## Quick Start
 
@@ -54,19 +54,6 @@ npx --yes pnpm@9.15.0 install
 6. Review the diff against the spec.
 7. Release with versioning, rollback, and observability notes.
 
-## State And Data Flow Coverage
-
-The spec does not force one state architecture, but it does force every feature to declare:
-
-- State ownership by layer
-- Mutation boundaries
-- Persistence policy
-- Selectors or derivations
-- Async flow, cancellation, and rollback
-- Logging, redaction, and security constraints
-
-Framework-specific examples live in `spec/examples/` for Redux Toolkit, Zustand, and MobX so agents can follow concrete patterns without turning the project into a boilerplate.
-
 ## CLI
 
 ```bash
@@ -86,9 +73,10 @@ React Native Vibe Spec Check
 ✓ TypeScript configured
 ✓ AGENTS.md found
 ✓ Feature specs found
-✗ No obvious secret names detected
 △ E2E test command found
-Score: 72/100
+✓ State/data-flow decision documented
+✓ No obvious secret names detected
+Score: 93/100
 ```
 
 ## Repository Map
@@ -96,6 +84,7 @@ Score: 72/100
 ```text
 react-native-vibe-spec/
   spec/                 Versioned specification and schema
+    data-flow/          Framework-specific state and data-flow specs
   templates/            Spec, plan, task, review, and release templates
   rules/                React Native engineering rules
   packages/
@@ -130,7 +119,7 @@ It is not:
 - v0.1: specification, templates, AGENTS.md, rules, basic CLI
 - v0.2: stronger Expo and bare React Native detection
 - v0.3: Codex skill, Claude Code instructions, Copilot instructions, Cursor rules, MCP server
-- v0.4: ESLint config, TypeScript preset, security scanner rules, CI templates
+- v0.4: ESLint config, TypeScript preset, security scanner rules, CI templates, state/data-flow checks
 - v1.0: stable semver spec, RFC process, example apps, compatibility matrix
 
 ## Slogan

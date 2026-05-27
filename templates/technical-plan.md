@@ -14,18 +14,15 @@
 
 ## State Model
 
-- State library or framework:
 - Server state:
 - Client state:
 - Form state:
 - Persisted state:
-- Ownership boundaries:
-- Mutation boundaries:
-- Selectors or derivations:
-- Async flow, retries, and cancellation:
-- Optimistic updates and rollback:
-- Logging, analytics, and redaction:
-- Security constraints:
+- State/data-flow framework:
+- Mutation boundary:
+- Selectors, hooks, computed values, or cache APIs:
+- Persistence, hydration, migration, and reset:
+- Sensitive data restrictions:
 
 ## API and Data Flow
 

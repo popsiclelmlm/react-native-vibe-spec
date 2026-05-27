@@ -33,6 +33,14 @@ For project-level adoption:
 - `templates/`
 - Quality scripts in `package.json`
 
+For app-level state/data-flow changes:
+
+- A named state owner and framework decision
+- A mutation boundary for writes
+- A read boundary through selectors, hooks, computed values, or server-cache APIs
+- Persistence, hydration, invalidation, reset, and migration rules
+- Security rules for values that must never be stored, logged, snapshotted, or exposed to devtools
+
 ## Agent Workflow
 
 1. Read `AGENTS.md`, `docs/architecture.md`, and the relevant feature spec.
@@ -52,9 +60,8 @@ A compliant feature spec must name:
 - Optional web behavior
 - Navigation and deep-link impact
 - Data contracts
-- State library or framework choice
 - Client, server, form, and persisted state boundaries
-- Mutation boundaries, selectors or derivations, async flow, rollback, logging, and security constraints for stateful behavior
+- State/data-flow framework, when shared state is involved
 - Offline, loading, error, empty, and permission-denied states when relevant
 - Secure storage and cache behavior
 - Required tests

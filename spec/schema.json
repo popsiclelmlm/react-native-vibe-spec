@@ -102,6 +102,56 @@
         }
       }
     },
+    "stateModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "owner": {
+          "type": "string"
+        },
+        "framework": {
+          "enum": [
+            "redux-toolkit",
+            "redux",
+            "zustand",
+            "mobx",
+            "tanstack-query",
+            "apollo-client",
+            "jotai",
+            "recoil",
+            "xstate",
+            "local-react-state",
+            "form-library",
+            "custom",
+            "none"
+          ]
+        },
+        "mutationBoundary": {
+          "type": "string"
+        },
+        "readBoundary": {
+          "type": "string"
+        },
+        "asyncFlow": {
+          "type": "string"
+        },
+        "optimisticRollback": {
+          "type": "string"
+        },
+        "persistence": {
+          "type": "string"
+        },
+        "resetBehavior": {
+          "type": "string"
+        },
+        "sensitiveData": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "storage": {
       "type": "object",
       "additionalProperties": false,

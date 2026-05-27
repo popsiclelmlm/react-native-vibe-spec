@@ -1,0 +1,83 @@
+{
+  "title": "Redux Toolkit Auth Session Refresh",
+  "userOutcome": "Signed-in users keep their session during normal app use, and expired sessions recover or sign out cleanly without exposing token details.",
+  "platforms": {
+    "ios": "required",
+    "android": "required",
+    "web": "optional"
+  },
+  "uxStates": [
+    "authenticated",
+    "refreshing session",
+    "refresh failed",
+    "signed out",
+    "offline refresh deferred"
+  ],
+  "navigation": {
+    "updatesRoutes": [
+      "protected route guards"
+    ],
+    "redirects": [
+      "expired unrecoverable sessions go to /auth/login"
+    ],
+    "deepLinks": [
+      "protected deep links wait for refresh completion before routing"
+    ]
+  },
+  "dataContracts": [
+    {
+      "name": "refresh session",
+      "method": "POST",
+      "path": "/auth/refresh",
+      "request": "secure refresh token only",
+      "response": "access token, refresh token rotation metadata, expiry",
+      "errors": "unauthorized, revoked, transient network failure"
+    }
+  ],
+  "stateAndDataFlow": {
+    "stateLibraryOrFramework": "Redux Toolkit with RTK Query",
+    "stateOwnershipByLayer": "auth slice owns session flags; RTK Query owns refresh request lifecycle; screens read selectors only",
+    "mutationBoundaries": "session updates happen through slice reducers and RTK Query lifecycle handlers only",
+    "persistencePolicy": "refresh token metadata only in approved secure storage; access token stays in memory",
+    "selectorsOrDerivations": "selectIsAuthenticated, selectSessionExpiry, selectRefreshPending",
+    "asyncFlowAndCancellation": "route guard triggers refresh once; duplicate refreshes are deduped; sign-out cancels in-flight protected requests",
+    "optimisticUpdatesAndRollback": "temporary authenticated UI rolls back to signed-out state on refresh failure",
+    "loggingAndRedactionConstraints": "auth middleware must redact token fields and auth headers from logs",
+    "securityConstraints": "no token payloads in Redux devtools snapshots in production builds"
+  },
+  "storage": {
+    "local": [],
+    "secure": [
+      "rotated refresh token metadata"
+    ],
+    "cacheInvalidation": "clear protected RTK Query caches on sign-out",
+    "neverStore": [
+      "access tokens",
+      "OTP codes",
+      "auth headers"
+    ]
+  },
+  "permissions": [],
+  "tests": {
+    "unit": [
+      "auth selectors and reducer transitions"
+    ],
+    "integration": [
+      "refresh success, revoked session, offline retry path"
+    ],
+    "e2e": [
+      "protected deep link while token is expired"
+    ],
+    "accessibility": [
+      "sign-out and retry messaging remains screen-reader readable"
+    ],
+    "security": [
+      "redaction coverage for auth logs and Redux snapshot policy"
+    ]
+  },
+  "acceptanceCriteria": [
+    "Refresh flow does not trigger duplicate network calls for one session expiry event.",
+    "Failed refresh clears protected caches and returns the user to login.",
+    "No auth token values appear in logs, persisted state, or production devtools output."
+  ]
+}

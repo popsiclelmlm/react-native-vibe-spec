@@ -7,7 +7,8 @@
 - Form state belongs in the approved form strategy.
 - Persisted state must be listed in the feature spec.
 - Sensitive state must use approved secure storage.
-- Every feature spec must name the state library or framework in use, even when the answer is "React local state only".
+- App-level state libraries must be named in `docs/architecture.md`.
+- Framework-specific rules live in `spec/data-flow/`.
 
 ## Rules
 
@@ -15,8 +16,18 @@
 - Do not store access tokens in general-purpose async storage.
 - Cache invalidation rules must be documented for server state.
 - State libraries must not be added without updating architecture docs.
+- Shared state changes must name the mutation boundary and read boundary.
+- Persistence must define hydration, invalidation, migration, and reset behavior.
 - Optimistic updates must define rollback behavior.
-- Specs and plans must declare state ownership, mutation boundaries, persistence, selectors or derivations, async flow, logging or redaction, and security constraints.
-- Redux or Redux Toolkit usage must document slice ownership, async thunk or RTK Query boundaries, middleware side effects, and selector inputs.
-- Zustand usage must document store ownership, action mutation boundaries, persistence middleware scope, and subscription selector behavior.
-- MobX usage must document observable ownership, action boundaries, computed values, and where reactions are allowed to trigger side effects.
+- Logging, devtools, analytics, and crash reports must not expose tokens, PII, or sensitive payloads.
+
+## Framework Specs
+
+- Redux Toolkit: `spec/data-flow/redux-toolkit.md`
+- Zustand: `spec/data-flow/zustand.md`
+- MobX: `spec/data-flow/mobx.md`
+- TanStack Query: `spec/data-flow/tanstack-query.md`
+- Apollo Client: `spec/data-flow/apollo-client.md`
+- Jotai: `spec/data-flow/jotai.md`
+- Recoil: `spec/data-flow/recoil.md`
+- XState: `spec/data-flow/xstate.md`
