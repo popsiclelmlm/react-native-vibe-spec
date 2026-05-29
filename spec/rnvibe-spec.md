@@ -79,7 +79,7 @@ A compliant feature spec must name:
 - Templates
 - Quality scripts
 - E2E script
-- Security checklist
+- Security guidance coverage
 - Release checklist
 - Obvious secret-like variable names
 - Non-local cleartext HTTP endpoints

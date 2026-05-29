@@ -10,6 +10,7 @@ Security guidance in this repository has two layers:
 - Do not commit real secrets or tokens.
 - Keep secret detection conservative and explain false positives.
 - Treat non-local cleartext HTTP endpoints as security findings in `rnvibe check`.
+- Keep security guidance explicit about bundled secrets, token storage, logging, permissions, and network boundaries.
 - Do not claim the CLI is a complete mobile security scanner.
 - Treat `rnvibe check` as a readiness signal, not a formal audit.
 

@@ -37,6 +37,34 @@ const SECRET_NAME_RE =
 const CLEARTEXT_HTTP_URL_RE = /\bhttp:\/\/[^\s"'`<>{}\[\])]+/gi;
 const LOCAL_CLEARTEXT_HOSTS = new Set(["localhost", "0.0.0.0", "10.0.2.2", "10.0.3.2", "::1"]);
 
+const SECURITY_COVERAGE_REQUIREMENTS = [
+  {
+    id: "bundled-secrets",
+    name: "bundled secrets",
+    patterns: [/\bsecret/i, /\bbundl/i]
+  },
+  {
+    id: "token-storage",
+    name: "token storage",
+    patterns: [/\btoken/i, /\b(?:storage|store|stored|stores)\b/i]
+  },
+  {
+    id: "logging",
+    name: "logging",
+    patterns: [/\b(?:log|logs|logged|logging)\b/i]
+  },
+  {
+    id: "permissions",
+    name: "permissions",
+    patterns: [/\bpermissions?\b/i]
+  },
+  {
+    id: "network-boundaries",
+    name: "network boundaries",
+    patterns: [/\bnetwork\b/i, /\b(?:boundar\w*|hosts?|tls|https?|domains?)\b/i]
+  }
+];
+
 const STATE_DATA_LIBRARY_DEFINITIONS = [
   {
     id: "redux-toolkit",
@@ -345,11 +373,11 @@ This project follows react-native-vibe-spec v0.1.
 
 ## Rules
 
-- Never put secrets, private keys, refresh tokens, or privileged API keys in app code.
+- Never put secrets, private keys, refresh tokens, or privileged API keys in bundled app code or assets.
 - Treat public environment variables as bundled client data.
 - Store sensitive user tokens only through an approved secure storage mechanism.
 - Do not log PII, tokens, headers, one-time passwords, or full API payloads.
-- Use TLS for production network requests and document allowed hosts.
+- Use TLS for production network requests and document network boundaries and allowed hosts.
 - Limit cleartext HTTP to documented local development endpoints.
 - Request the minimum mobile permissions needed for the feature.
 - Document authentication, storage, networking, and permission changes in the feature spec.
@@ -550,13 +578,12 @@ export function checkProject(root = process.cwd()) {
     7
   );
 
+  const securityCoverage = analyzeSecurityGuidance(root);
   add(
     "security",
-    "Security checklist found",
-    fileExists(root, "SECURITY.md") || fileExists(root, "docs/security.md") || fileExists(root, "rules/security.md")
-      ? "pass"
-      : "warn",
-    "Security rules should cover secrets, token storage, logging, permissions, and network boundaries.",
+    "Security guidance covers required topics",
+    securityCoverage.hasGuidance && securityCoverage.missing.length === 0 ? "pass" : "warn",
+    detailsForSecurityCoverage(securityCoverage),
     8
   );
 
@@ -608,6 +635,7 @@ export function checkProject(root = process.cwd()) {
     checks,
     score: calculateScore(checks),
     featureSpecs,
+    securityCoverage,
     secretHits,
     cleartextNetworkHits
   };
@@ -767,6 +795,34 @@ function detailsForStateDataFlow(detected, documented, hasArchitectureDoc) {
   return `Detected ${detectedNames}. Document in docs/architecture.md: ${missing.join(", ")}.`;
 }
 
+function analyzeSecurityGuidance(root) {
+  const files = ["SECURITY.md", "docs/security.md", "rules/security.md"].filter((relativePath) =>
+    fileExists(root, relativePath)
+  );
+  const text = files.map((relativePath) => readText(root, relativePath)).join("\n");
+  const missing = SECURITY_COVERAGE_REQUIREMENTS.filter((requirement) =>
+    !requirement.patterns.every((pattern) => pattern.test(text))
+  ).map((requirement) => requirement.name);
+
+  return {
+    files,
+    hasGuidance: files.length > 0,
+    missing
+  };
+}
+
+function detailsForSecurityCoverage(coverage) {
+  if (!coverage.hasGuidance) {
+    return "Add SECURITY.md, docs/security.md, or rules/security.md with bundled secrets, token storage, logging, permissions, and network boundaries.";
+  }
+
+  if (coverage.missing.length === 0) {
+    return `Covered by ${coverage.files.join(", ")}.`;
+  }
+
+  return `Missing coverage: ${coverage.missing.join(", ")}.`;
+}
+
 function findFeatureSpecs(root) {
   return walkFiles(root, (relativePath) => {
     const normalized = relativePath.split(path.sep).join("/");
@@ -917,7 +973,7 @@ function actionFor(id) {
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
     "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",
-    security: "Add SECURITY.md or docs/security.md.",
+    security: "Add security guidance that covers bundled secrets, token storage, logging, permissions, and network boundaries.",
     release: "Add templates/release-checklist.md or docs/release.md.",
     secrets: "Move secret-like values out of bundled code and public env names.",
     "network-boundaries": "Replace non-local http:// endpoints with HTTPS or document a local-only development boundary.",

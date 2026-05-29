@@ -58,6 +58,60 @@ test("checkProject reports obvious secret-like public names", () => {
   assert.equal(result.secretHits[0].name, "EXPO_PUBLIC_STRIPE_SECRET_KEY");
 });
 
+test("checkProject warns when security guidance misses required coverage", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.writeFileSync(path.join(root, "SECURITY.md"), "# Security\n\nDo not bundle secrets in the app.");
+
+  const result = checkProject(root);
+  const securityCheck = result.checks.find((check) => check.id === "security");
+
+  assert.equal(securityCheck.status, "warn");
+  assert.deepEqual(result.securityCoverage.files, ["SECURITY.md"]);
+  assert.ok(result.securityCoverage.missing.includes("token storage"));
+  assert.match(securityCheck.details, /token storage/);
+});
+
+test("checkProject passes when security guidance covers required topics", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.writeFileSync(
+    path.join(root, "SECURITY.md"),
+    [
+      "# Security",
+      "Do not bundle secrets in app code or assets.",
+      "Store token values only in approved secure storage.",
+      "Do not log PII, tokens, or payloads.",
+      "Document mobile permissions and denial behavior.",
+      "Document network boundaries, allowed hosts, and TLS requirements."
+    ].join("\n")
+  );
+
+  const result = checkProject(root);
+  const securityCheck = result.checks.find((check) => check.id === "security");
+
+  assert.equal(securityCheck.status, "pass");
+  assert.deepEqual(result.securityCoverage.missing, []);
+});
+
 test("checkProject reports non-local cleartext HTTP endpoints", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

@@ -75,6 +75,7 @@ React Native Vibe Spec Check
 ✓ Feature specs found
 △ E2E test command found
 ✓ State/data-flow decision documented
+✓ Security guidance covers required topics
 ✓ No obvious secret names detected
 ✓ No non-local cleartext HTTP endpoints detected
 Score: 94/100

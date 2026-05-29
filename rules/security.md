@@ -12,7 +12,7 @@
 
 ## Rules
 
-- Never put private secrets, privileged API keys, refresh tokens, signing keys, or certificates in bundled app code.
+- Never put private secrets, privileged API keys, refresh tokens, signing keys, or certificates in bundled app code or assets.
 - Treat public environment variables as client-visible data.
 - Store sensitive user tokens only in the approved secure storage mechanism.
 - Do not log tokens, PII, one-time codes, headers, or sensitive payloads.
