@@ -10,6 +10,7 @@ This repository defines `react-native-vibe-spec`, a spec-first engineering stand
 - Prefer small, versionable rules over long prompt-only documents.
 - CLI behavior must be deterministic and runnable in CI.
 - Security guidance must explicitly cover bundled secrets, token storage, logging, permissions, and network boundaries.
+- Specs must keep platform behavior explicit for iOS, Android, and optional web.
 - New features should update templates, rules, examples, and checks when relevant.
 
 ## Commands
@@ -18,7 +19,7 @@ This repository defines `react-native-vibe-spec`, a spec-first engineering stand
 - Lint: `pnpm lint`
 - Typecheck: `pnpm typecheck`
 - Test: `pnpm test`
-- Local CLI: `node packages/cli/bin/rnvibe.js`
+- Vibe check: `node packages/cli/bin/rnvibe.js check`
 
 ## Implementation Notes
 

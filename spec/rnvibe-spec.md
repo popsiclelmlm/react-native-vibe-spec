@@ -26,7 +26,7 @@ For new features:
 
 For project-level adoption:
 
-- `AGENTS.md`
+- `AGENTS.md` guidance coverage
 - `docs/architecture.md`
 - `docs/security.md`
 - `docs/release.md`

@@ -38,6 +38,47 @@ test("createFeature writes spec, plan, tasks, and acceptance files", () => {
   assert.ok(fs.existsSync(path.join(root, "features/auth-login/acceptance.md")));
 });
 
+test("checkProject warns when AGENTS.md misses required guidance", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents\n\nUse TypeScript.");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+
+  const result = checkProject(root);
+  const agentsCheck = result.checks.find((check) => check.id === "agents");
+
+  assert.equal(agentsCheck.status, "warn");
+  assert.ok(result.agentGuidance.missing.includes("spec-first workflow"));
+  assert.match(agentsCheck.details, /spec-first workflow/);
+});
+
+test("checkProject passes when AGENTS.md covers required guidance", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  initProject(root, { force: true });
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+
+  const result = checkProject(root);
+  const agentsCheck = result.checks.find((check) => check.id === "agents");
+
+  assert.equal(agentsCheck.status, "pass");
+  assert.deepEqual(result.agentGuidance.missing, []);
+});
+
 test("checkProject warns when feature specs miss required sections", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

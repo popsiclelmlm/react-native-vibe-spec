@@ -121,6 +121,29 @@ const FEATURE_SPEC_COVERAGE_REQUIREMENTS = [
   ["Acceptance Criteria", /## Acceptance Criteria/]
 ];
 
+const AGENT_GUIDANCE_REQUIREMENTS = [
+  {
+    name: "spec-first workflow",
+    patterns: [/\bspec(?:ification)?\b/i, /\bfeature spec\b|\bspec-first\b/i]
+  },
+  {
+    name: "platform behavior",
+    patterns: [/\bios\b/i, /\bandroid\b/i]
+  },
+  {
+    name: "security constraints",
+    patterns: [/\bsecurity\b|\bsecrets?\b/i]
+  },
+  {
+    name: "quality commands",
+    patterns: [/\blint\b/i, /\btypecheck\b/i, /\btest\b/i]
+  },
+  {
+    name: "vibe spec check command",
+    patterns: [/(?:\brnvibe\b|react-native-vibe-spec|packages\/cli\/bin\/rnvibe\.js).*?\bcheck\b/i]
+  }
+];
+
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
@@ -629,11 +652,16 @@ export function checkProject(root = process.cwd()) {
     8
   );
 
+  const agentGuidance = analyzeAgentGuidance(root);
   add(
     "agents",
-    "AGENTS.md found",
-    fileExists(root, "AGENTS.md") ? "pass" : "fail",
-    fileExists(root, "AGENTS.md") ? "Agent instructions are available." : "Run rnvibe init to create AGENTS.md.",
+    "AGENTS.md covers required guidance",
+    agentGuidance.hasGuidance && agentGuidance.missing.length === 0
+      ? "pass"
+      : agentGuidance.hasGuidance
+        ? "warn"
+        : "fail",
+    detailsForAgentGuidance(agentGuidance),
     8
   );
 
@@ -761,6 +789,7 @@ export function checkProject(root = process.cwd()) {
     score: calculateScore(checks),
     featureSpecs,
     featureSpecCoverage,
+    agentGuidance,
     vibeCheckScript,
     templateCoverage,
     securityCoverage,
@@ -910,6 +939,37 @@ function findVibeCheckScript(scripts) {
   const commandPattern = /(?:\brnvibe\b|react-native-vibe-spec|packages\/cli\/bin\/rnvibe\.js)\s+(?:[^\n;&|]*\s+)?check\b/;
   const match = entries.find(([, command]) => commandPattern.test(String(command)));
   return match ? match[0] : null;
+}
+
+function analyzeAgentGuidance(root) {
+  if (!fileExists(root, "AGENTS.md")) {
+    return {
+      hasGuidance: false,
+      missing: AGENT_GUIDANCE_REQUIREMENTS.map((requirement) => requirement.name)
+    };
+  }
+
+  const text = readText(root, "AGENTS.md");
+  const missing = AGENT_GUIDANCE_REQUIREMENTS.filter((requirement) =>
+    !requirement.patterns.every((pattern) => pattern.test(text))
+  ).map((requirement) => requirement.name);
+
+  return {
+    hasGuidance: true,
+    missing
+  };
+}
+
+function detailsForAgentGuidance(guidance) {
+  if (!guidance.hasGuidance) {
+    return "Run rnvibe init to create AGENTS.md.";
+  }
+
+  if (guidance.missing.length === 0) {
+    return "Agent instructions cover spec workflow, platform behavior, security, quality commands, and rnvibe check.";
+  }
+
+  return `Missing guidance: ${guidance.missing.join(", ")}.`;
 }
 
 function analyzeTemplateCoverage(root) {
@@ -1203,7 +1263,7 @@ function actionFor(id) {
     "package-json": "Initialize a package.json for the project.",
     "react-native": "Install or document the target React Native or Expo runtime.",
     typescript: "Add TypeScript and a strict tsconfig.json.",
-    agents: "Run rnvibe init to create AGENTS.md.",
+    agents: "Update AGENTS.md with spec workflow, platform behavior, security constraints, quality commands, and rnvibe check.",
     "feature-specs": "Create or update feature specs with user outcome, platforms, UX states, navigation, data contracts, tests, and acceptance criteria.",
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",

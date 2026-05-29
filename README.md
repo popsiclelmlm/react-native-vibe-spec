@@ -71,7 +71,7 @@ Example output:
 ```text
 React Native Vibe Spec Check
 ✓ TypeScript configured
-✓ AGENTS.md found
+✓ AGENTS.md covers required guidance
 ✓ Feature specs cover required sections
 ✓ Spec templates cover required sections
 ✓ Vibe spec check script configured
