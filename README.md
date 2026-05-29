@@ -72,7 +72,7 @@ Example output:
 React Native Vibe Spec Check
 ✓ TypeScript configured
 ✓ AGENTS.md found
-✓ Feature specs found
+✓ Feature specs cover required sections
 ✓ Spec templates cover required sections
 ✓ Vibe spec check script configured
 △ E2E test command found

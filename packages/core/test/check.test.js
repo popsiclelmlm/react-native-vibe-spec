@@ -38,6 +38,48 @@ test("createFeature writes spec, plan, tasks, and acceptance files", () => {
   assert.ok(fs.existsSync(path.join(root, "features/auth-login/acceptance.md")));
 });
 
+test("checkProject warns when feature specs miss required sections", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Feature Spec: Auth Login\n\n## User Outcome\n\nLogin.");
+
+  const result = checkProject(root);
+  const featureSpecCheck = result.checks.find((check) => check.id === "feature-specs");
+
+  assert.equal(featureSpecCheck.status, "warn");
+  assert.equal(result.featureSpecCoverage.missingCoverage[0].file, "features/auth-login/spec.md");
+  assert.ok(result.featureSpecCoverage.missingCoverage[0].missing.includes("Platforms"));
+  assert.match(featureSpecCheck.details, /Platforms/);
+});
+
+test("checkProject passes when feature specs cover required sections", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  const result = createFeature(root, "Auth Login");
+
+  assert.equal(result.slug, "auth-login");
+  const checkResult = checkProject(root);
+  const featureSpecCheck = checkResult.checks.find((check) => check.id === "feature-specs");
+
+  assert.equal(featureSpecCheck.status, "pass");
+  assert.deepEqual(checkResult.featureSpecCoverage.missingCoverage, []);
+});
+
 test("checkProject reports obvious secret-like public names", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

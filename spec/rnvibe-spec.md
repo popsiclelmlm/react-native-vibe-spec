@@ -75,7 +75,7 @@ A compliant feature spec must name:
 - React Native or Expo detection
 - TypeScript
 - `AGENTS.md`
-- Feature specs
+- Feature spec coverage
 - Template coverage
 - Quality scripts
 - Vibe spec check script

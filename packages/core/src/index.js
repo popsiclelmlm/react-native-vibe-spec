@@ -111,6 +111,16 @@ const TEMPLATE_COVERAGE_REQUIREMENTS = [
   }
 ];
 
+const FEATURE_SPEC_COVERAGE_REQUIREMENTS = [
+  ["User Outcome", /## User Outcome/],
+  ["Platforms", /## Platforms/],
+  ["UX States", /## UX States/],
+  ["Navigation Impact", /## Navigation Impact/],
+  ["Data Contract", /## Data Contract/],
+  ["Tests Required", /## Tests Required/],
+  ["Acceptance Criteria", /## Acceptance Criteria/]
+];
+
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
@@ -628,13 +638,12 @@ export function checkProject(root = process.cwd()) {
   );
 
   const featureSpecs = findFeatureSpecs(root);
+  const featureSpecCoverage = analyzeFeatureSpecCoverage(root, featureSpecs);
   add(
     "feature-specs",
-    "Feature specs found",
-    featureSpecs.length > 0 ? "pass" : "warn",
-    featureSpecs.length > 0
-      ? `Found ${featureSpecs.length} feature spec${featureSpecs.length === 1 ? "" : "s"}.`
-      : "Create specs with rnvibe new feature <name>.",
+    "Feature specs cover required sections",
+    featureSpecs.length > 0 && featureSpecCoverage.missingCoverage.length === 0 ? "pass" : "warn",
+    detailsForFeatureSpecCoverage(featureSpecs, featureSpecCoverage),
     10
   );
 
@@ -751,6 +760,7 @@ export function checkProject(root = process.cwd()) {
     checks,
     score: calculateScore(checks),
     featureSpecs,
+    featureSpecCoverage,
     vibeCheckScript,
     templateCoverage,
     securityCoverage,
@@ -1030,6 +1040,37 @@ function findFeatureSpecs(root) {
   });
 }
 
+function analyzeFeatureSpecCoverage(root, featureSpecs) {
+  const missingCoverage = [];
+
+  for (const relativePath of featureSpecs) {
+    const text = readText(root, relativePath);
+    const missing = FEATURE_SPEC_COVERAGE_REQUIREMENTS.filter(([, pattern]) => !pattern.test(text)).map(
+      ([name]) => name
+    );
+    if (missing.length > 0) {
+      missingCoverage.push({ file: relativePath, missing });
+    }
+  }
+
+  return { missingCoverage };
+}
+
+function detailsForFeatureSpecCoverage(featureSpecs, coverage) {
+  if (featureSpecs.length === 0) {
+    return "Create specs with rnvibe new feature <name>.";
+  }
+
+  if (coverage.missingCoverage.length === 0) {
+    return `Found ${featureSpecs.length} feature spec${featureSpecs.length === 1 ? "" : "s"} with required sections.`;
+  }
+
+  return coverage.missingCoverage
+    .slice(0, 3)
+    .map((item) => `${item.file} missing ${item.missing.join(", ")}`)
+    .join("; ");
+}
+
 function scanForSecretNames(root) {
   const hits = [];
   const files = walkFiles(root, (relativePath) => TEXT_EXTENSIONS.has(path.extname(relativePath)));
@@ -1163,7 +1204,7 @@ function actionFor(id) {
     "react-native": "Install or document the target React Native or Expo runtime.",
     typescript: "Add TypeScript and a strict tsconfig.json.",
     agents: "Run rnvibe init to create AGENTS.md.",
-    "feature-specs": "Run rnvibe new feature <name> before implementing new features.",
+    "feature-specs": "Create or update feature specs with user outcome, platforms, UX states, navigation, data contracts, tests, and acceptance criteria.",
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     "vibe-check-script": "Add a package script such as \"check\": \"rnvibe check\" for CI readiness gates.",
