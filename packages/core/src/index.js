@@ -31,6 +31,86 @@ const TEXT_EXTENSIONS = new Set([
   ".yml"
 ]);
 
+const TEMPLATE_COVERAGE_REQUIREMENTS = [
+  {
+    file: "templates/feature-spec.md",
+    title: "feature spec template",
+    requirements: [
+      ["User Outcome", /## User Outcome/],
+      ["Platforms", /## Platforms/],
+      ["UX States", /## UX States/],
+      ["Navigation Impact", /## Navigation Impact/],
+      ["Data Contract", /## Data Contract/],
+      ["Network Boundaries", /## Network Boundaries/],
+      ["State and Data Flow", /## State and Data Flow/],
+      ["Storage", /## Storage/],
+      ["Permissions", /## Permissions/],
+      ["Tests Required", /## Tests Required/],
+      ["Acceptance Criteria", /## Acceptance Criteria/]
+    ]
+  },
+  {
+    file: "templates/technical-plan.md",
+    title: "technical plan template",
+    requirements: [
+      ["Architecture Impact", /## Architecture Impact/],
+      ["Dependencies", /## Dependencies/],
+      ["State Model", /## State Model/],
+      ["API and Data Flow", /## API and Data Flow/],
+      ["Platform Notes", /## Platform Notes/],
+      ["Risks", /## Risks/],
+      ["Verification Plan", /## Verification Plan/]
+    ]
+  },
+  {
+    file: "templates/tasks.md",
+    title: "tasks template",
+    requirements: [
+      ["spec and plan confirmation", /Confirm feature spec and technical plan/],
+      ["state/data-flow constraints", /Confirm state ownership, mutation boundaries, persistence, selectors, async flow, rollback, logging, and security constraints/],
+      ["rnvibe check validation", /Run rnvibe check/]
+    ]
+  },
+  {
+    file: "templates/acceptance-checklist.md",
+    title: "acceptance checklist template",
+    requirements: [
+      ["iOS verification", /iOS behavior/],
+      ["Android verification", /Android behavior/],
+      ["offline states", /offline states/],
+      ["accessibility", /Accessibility labels/],
+      ["network hosts", /Network hosts/],
+      ["secret and PII safety", /No secrets, tokens, or PII/],
+      ["release impact", /Release, rollback, and observability/]
+    ]
+  },
+  {
+    file: "templates/pr-review.md",
+    title: "PR review template",
+    requirements: [
+      ["spec artifacts", /Feature spec, plan, tasks, and acceptance checklist/],
+      ["platform behavior", /iOS and Android behavior/],
+      ["network boundary review", /Network hosts, TLS requirements/],
+      ["secret and PII review", /No secrets, tokens, PII/],
+      ["test coverage", /Unit\/integration\/E2E coverage/],
+      ["release and rollback", /Release and rollback impact/]
+    ]
+  },
+  {
+    file: "templates/release-checklist.md",
+    title: "release checklist template",
+    requirements: [
+      ["version and build", /Version and build number/],
+      ["migration impact", /Migration impact/],
+      ["OTA/update channel", /OTA\/update-channel impact/],
+      ["crash monitoring", /Crash and error monitoring/],
+      ["rollback path", /Rollback path/],
+      ["store review", /App Store \/ Play Store review notes/],
+      ["feature flags", /Feature flags or staged rollout/]
+    ]
+  }
+];
+
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
@@ -353,6 +433,7 @@ Describe the data flow from user action to UI update.
 
 - [ ] Confirm feature spec and technical plan are complete.
 - [ ] Add or update types and data contracts.
+- [ ] Confirm state ownership, mutation boundaries, persistence, selectors, async flow, rollback, logging, and security constraints.
 - [ ] Implement UI states.
 - [ ] Implement data fetching or persistence.
 - [ ] Add error, offline, and empty states.
@@ -557,21 +638,12 @@ export function checkProject(root = process.cwd()) {
     10
   );
 
-  const missingTemplates = [
-    "templates/feature-spec.md",
-    "templates/technical-plan.md",
-    "templates/tasks.md",
-    "templates/acceptance-checklist.md",
-    "templates/pr-review.md",
-    "templates/release-checklist.md"
-  ].filter((relativePath) => !fileExists(root, relativePath));
+  const templateCoverage = analyzeTemplateCoverage(root);
   add(
     "templates",
-    "Spec templates available",
-    missingTemplates.length === 0 ? "pass" : "warn",
-    missingTemplates.length === 0
-      ? "All standard templates are present."
-      : `Missing: ${missingTemplates.join(", ")}`,
+    "Spec templates cover required sections",
+    templateCoverage.missingFiles.length === 0 && templateCoverage.missingCoverage.length === 0 ? "pass" : "warn",
+    detailsForTemplateCoverage(templateCoverage),
     8
   );
 
@@ -668,6 +740,7 @@ export function checkProject(root = process.cwd()) {
     checks,
     score: calculateScore(checks),
     featureSpecs,
+    templateCoverage,
     securityCoverage,
     releaseCoverage,
     secretHits,
@@ -808,6 +881,47 @@ function detectStateDataLibraries(dependencies) {
     packageNames: definition.packageNames.filter(hasPackage),
     terms: definition.terms
   }));
+}
+
+function analyzeTemplateCoverage(root) {
+  const missingFiles = [];
+  const missingCoverage = [];
+
+  for (const template of TEMPLATE_COVERAGE_REQUIREMENTS) {
+    if (!fileExists(root, template.file)) {
+      missingFiles.push(template.file);
+      continue;
+    }
+
+    const text = readText(root, template.file);
+    const missing = template.requirements
+      .filter(([, pattern]) => !pattern.test(text))
+      .map(([name]) => name);
+    if (missing.length > 0) {
+      missingCoverage.push({
+        file: template.file,
+        title: template.title,
+        missing
+      });
+    }
+  }
+
+  return { missingFiles, missingCoverage };
+}
+
+function detailsForTemplateCoverage(coverage) {
+  if (coverage.missingFiles.length > 0) {
+    return `Missing: ${coverage.missingFiles.join(", ")}`;
+  }
+
+  if (coverage.missingCoverage.length === 0) {
+    return "All standard templates are present and cover required sections.";
+  }
+
+  return coverage.missingCoverage
+    .slice(0, 3)
+    .map((item) => `${item.file} missing ${item.missing.join(", ")}`)
+    .join("; ");
 }
 
 function detailsForStateDataFlow(detected, documented, hasArchitectureDoc) {
@@ -1031,7 +1145,7 @@ function actionFor(id) {
     typescript: "Add TypeScript and a strict tsconfig.json.",
     agents: "Run rnvibe init to create AGENTS.md.",
     "feature-specs": "Run rnvibe new feature <name> before implementing new features.",
-    templates: "Run rnvibe init to restore standard templates.",
+    templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
     "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",

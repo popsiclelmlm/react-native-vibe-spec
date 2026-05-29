@@ -24,6 +24,7 @@ test("initProject creates agent and template files", () => {
   assert.ok(fs.existsSync(path.join(root, "templates/feature-spec.md")));
   assert.match(fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8"), /## State and Data Flow/);
   assert.match(fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8"), /## Network Boundaries/);
+  assert.match(fs.readFileSync(path.join(root, "templates/tasks.md"), "utf8"), /Confirm state ownership/);
 });
 
 test("createFeature writes spec, plan, tasks, and acceptance files", () => {
@@ -56,6 +57,56 @@ test("checkProject reports obvious secret-like public names", () => {
 
   assert.equal(secretCheck.status, "fail");
   assert.equal(result.secretHits[0].name, "EXPO_PUBLIC_STRIPE_SECRET_KEY");
+});
+
+test("checkProject warns when a template misses required coverage", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  initProject(root, { force: true });
+  fs.writeFileSync(
+    path.join(root, "templates/feature-spec.md"),
+    fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8").replace(/\n## Network Boundaries[\s\S]*?\n## State and Data Flow/, "\n## State and Data Flow")
+  );
+
+  const result = checkProject(root);
+  const templateCheck = result.checks.find((check) => check.id === "templates");
+
+  assert.equal(templateCheck.status, "warn");
+  assert.deepEqual(result.templateCoverage.missingFiles, []);
+  assert.equal(result.templateCoverage.missingCoverage[0].file, "templates/feature-spec.md");
+  assert.ok(result.templateCoverage.missingCoverage[0].missing.includes("Network Boundaries"));
+  assert.match(templateCheck.details, /Network Boundaries/);
+});
+
+test("checkProject passes when templates cover required sections", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  initProject(root, { force: true });
+
+  const result = checkProject(root);
+  const templateCheck = result.checks.find((check) => check.id === "templates");
+
+  assert.equal(templateCheck.status, "pass");
+  assert.deepEqual(result.templateCoverage.missingFiles, []);
+  assert.deepEqual(result.templateCoverage.missingCoverage, []);
 });
 
 test("checkProject warns when security guidance misses required coverage", () => {

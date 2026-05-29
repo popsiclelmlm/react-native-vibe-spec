@@ -76,7 +76,7 @@ A compliant feature spec must name:
 - TypeScript
 - `AGENTS.md`
 - Feature specs
-- Templates
+- Template coverage
 - Quality scripts
 - E2E script
 - Security guidance coverage
