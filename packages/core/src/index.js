@@ -656,6 +656,17 @@ export function checkProject(root = process.cwd()) {
     10
   );
 
+  const vibeCheckScript = findVibeCheckScript(project.scripts);
+  add(
+    "vibe-check-script",
+    "Vibe spec check script configured",
+    vibeCheckScript ? "pass" : "warn",
+    vibeCheckScript
+      ? `Found script: ${vibeCheckScript}`
+      : "Add a package script that runs rnvibe check so CI can enforce the spec.",
+    6
+  );
+
   const e2eScript = Object.keys(project.scripts).find((script) =>
     /(?:e2e|detox|maestro|playwright|appium)/i.test(`${script} ${project.scripts[script]}`)
   );
@@ -740,6 +751,7 @@ export function checkProject(root = process.cwd()) {
     checks,
     score: calculateScore(checks),
     featureSpecs,
+    vibeCheckScript,
     templateCoverage,
     securityCoverage,
     releaseCoverage,
@@ -881,6 +893,13 @@ function detectStateDataLibraries(dependencies) {
     packageNames: definition.packageNames.filter(hasPackage),
     terms: definition.terms
   }));
+}
+
+function findVibeCheckScript(scripts) {
+  const entries = Object.entries(scripts);
+  const commandPattern = /(?:\brnvibe\b|react-native-vibe-spec|packages\/cli\/bin\/rnvibe\.js)\s+(?:[^\n;&|]*\s+)?check\b/;
+  const match = entries.find(([, command]) => commandPattern.test(String(command)));
+  return match ? match[0] : null;
 }
 
 function analyzeTemplateCoverage(root) {
@@ -1147,6 +1166,7 @@ function actionFor(id) {
     "feature-specs": "Run rnvibe new feature <name> before implementing new features.",
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
+    "vibe-check-script": "Add a package script such as \"check\": \"rnvibe check\" for CI readiness gates.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
     "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",
     security: "Add security guidance that covers bundled secrets, token storage, logging, permissions, and network boundaries.",

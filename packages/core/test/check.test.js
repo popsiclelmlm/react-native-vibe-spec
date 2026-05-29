@@ -109,6 +109,52 @@ test("checkProject passes when templates cover required sections", () => {
   assert.deepEqual(result.templateCoverage.missingCoverage, []);
 });
 
+test("checkProject warns when no rnvibe check script is configured", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test", check: "echo generic-check" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+
+  const result = checkProject(root);
+  const vibeCheck = result.checks.find((check) => check.id === "vibe-check-script");
+
+  assert.equal(vibeCheck.status, "warn");
+  assert.equal(result.vibeCheckScript, null);
+  assert.match(vibeCheck.details, /rnvibe check/);
+});
+
+test("checkProject passes when rnvibe check script is configured", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: {
+        lint: "echo lint",
+        typecheck: "echo typecheck",
+        test: "echo test",
+        check: "node packages/cli/bin/rnvibe.js check"
+      }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+
+  const result = checkProject(root);
+  const vibeCheck = result.checks.find((check) => check.id === "vibe-check-script");
+
+  assert.equal(vibeCheck.status, "pass");
+  assert.equal(result.vibeCheckScript, "check");
+});
+
 test("checkProject warns when security guidance misses required coverage", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

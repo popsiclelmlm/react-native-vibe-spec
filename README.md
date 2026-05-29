@@ -74,6 +74,7 @@ React Native Vibe Spec Check
 ✓ AGENTS.md found
 ✓ Feature specs found
 ✓ Spec templates cover required sections
+✓ Vibe spec check script configured
 △ E2E test command found
 ✓ State/data-flow decision documented
 ✓ Security guidance covers required topics
