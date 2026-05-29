@@ -266,9 +266,10 @@ test("checkProject warns when CI workflow misses required checks", () => {
 
   assert.equal(ciCheck.status, "warn");
   assert.deepEqual(result.ciCoverage.files, [".github/workflows/ci.yml"]);
+  assert.ok(result.ciCoverage.missing.includes("frozen install"));
   assert.ok(result.ciCoverage.missing.includes("typecheck"));
   assert.ok(result.ciCoverage.missing.includes("rnvibe check"));
-  assert.match(ciCheck.details, /typecheck/);
+  assert.match(ciCheck.details, /frozen install/);
 });
 
 test("checkProject passes when CI workflow runs required checks", () => {
@@ -296,6 +297,7 @@ test("checkProject passes when CI workflow runs required checks", () => {
       "jobs:",
       "  test:",
       "    steps:",
+      "      - run: pnpm install --frozen-lockfile",
       "      - run: pnpm lint",
       "      - run: pnpm typecheck",
       "      - run: pnpm test",

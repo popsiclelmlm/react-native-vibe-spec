@@ -145,6 +145,10 @@ const AGENT_GUIDANCE_REQUIREMENTS = [
 ];
 
 const CI_WORKFLOW_REQUIREMENTS = [
+  [
+    "frozen install",
+    /\bpnpm\s+install\s+--frozen-lockfile\b|\bnpm\s+ci\b|\byarn\s+install\s+--immutable\b|\byarn\s+install\s+--frozen-lockfile\b/i
+  ],
   ["lint", /\b(?:pnpm|yarn)\s+(?:run\s+)?lint\b|\bnpm\s+run\s+lint\b/i],
   ["typecheck", /\b(?:pnpm|yarn)\s+(?:run\s+)?typecheck\b|\bnpm\s+run\s+typecheck\b/i],
   ["test", /\b(?:pnpm|yarn)\s+(?:run\s+)?test\b|\bnpm\s+(?:run\s+)?test\b/i],
@@ -985,7 +989,7 @@ function analyzeCiWorkflowCoverage(root) {
 
 function detailsForCiWorkflowCoverage(coverage) {
   if (!coverage.hasWorkflow) {
-    return "Add a CI workflow that runs lint, typecheck, test, and rnvibe check.";
+    return "Add a CI workflow that uses a frozen install and runs lint, typecheck, test, and rnvibe check.";
   }
 
   if (coverage.missing.length === 0) {
@@ -1322,7 +1326,7 @@ function actionFor(id) {
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     "vibe-check-script": "Add a package script such as \"check\": \"rnvibe check\" for CI readiness gates.",
-    "ci-workflow": "Add or update a CI workflow to run lint, typecheck, test, and rnvibe check.",
+    "ci-workflow": "Add or update a CI workflow to use a frozen install and run lint, typecheck, test, and rnvibe check.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
     "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",
     security: "Add security guidance that covers bundled secrets, token storage, logging, permissions, and network boundaries.",
