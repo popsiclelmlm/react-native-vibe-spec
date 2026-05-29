@@ -75,6 +75,7 @@ React Native Vibe Spec Check
 ✓ Feature specs cover required sections
 ✓ Spec templates cover required sections
 ✓ Vibe spec check script configured
+✓ CI workflow runs required checks
 △ E2E test command found
 ✓ State/data-flow decision documented
 ✓ Security guidance covers required topics

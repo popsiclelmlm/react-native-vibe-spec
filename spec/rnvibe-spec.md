@@ -79,6 +79,7 @@ A compliant feature spec must name:
 - Template coverage
 - Quality scripts
 - Vibe spec check script
+- CI workflow coverage
 - E2E script
 - Security guidance coverage
 - Release guidance coverage

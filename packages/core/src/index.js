@@ -144,6 +144,16 @@ const AGENT_GUIDANCE_REQUIREMENTS = [
   }
 ];
 
+const CI_WORKFLOW_REQUIREMENTS = [
+  ["lint", /\b(?:pnpm|yarn)\s+(?:run\s+)?lint\b|\bnpm\s+run\s+lint\b/i],
+  ["typecheck", /\b(?:pnpm|yarn)\s+(?:run\s+)?typecheck\b|\bnpm\s+run\s+typecheck\b/i],
+  ["test", /\b(?:pnpm|yarn)\s+(?:run\s+)?test\b|\bnpm\s+(?:run\s+)?test\b/i],
+  [
+    "rnvibe check",
+    /\b(?:pnpm|yarn)\s+(?:run\s+)?check\b|\bnpm\s+run\s+check\b|(?:\brnvibe\b|react-native-vibe-spec|packages\/cli\/bin\/rnvibe\.js)\s+(?:[^\n;&|]*\s+)?check\b/i
+  ]
+];
+
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
@@ -704,6 +714,15 @@ export function checkProject(root = process.cwd()) {
     6
   );
 
+  const ciCoverage = analyzeCiWorkflowCoverage(root);
+  add(
+    "ci-workflow",
+    "CI workflow runs required checks",
+    ciCoverage.hasWorkflow && ciCoverage.missing.length === 0 ? "pass" : "warn",
+    detailsForCiWorkflowCoverage(ciCoverage),
+    8
+  );
+
   const e2eScript = Object.keys(project.scripts).find((script) =>
     /(?:e2e|detox|maestro|playwright|appium)/i.test(`${script} ${project.scripts[script]}`)
   );
@@ -791,6 +810,7 @@ export function checkProject(root = process.cwd()) {
     featureSpecCoverage,
     agentGuidance,
     vibeCheckScript,
+    ciCoverage,
     templateCoverage,
     securityCoverage,
     releaseCoverage,
@@ -939,6 +959,40 @@ function findVibeCheckScript(scripts) {
   const commandPattern = /(?:\brnvibe\b|react-native-vibe-spec|packages\/cli\/bin\/rnvibe\.js)\s+(?:[^\n;&|]*\s+)?check\b/;
   const match = entries.find(([, command]) => commandPattern.test(String(command)));
   return match ? match[0] : null;
+}
+
+function findCiWorkflowFiles(root) {
+  return walkFiles(root, (relativePath) => {
+    const normalized = relativePath.split(path.sep).join("/");
+    return (
+      normalized.startsWith(".github/workflows/") &&
+      (normalized.endsWith(".yml") || normalized.endsWith(".yaml"))
+    );
+  });
+}
+
+function analyzeCiWorkflowCoverage(root) {
+  const files = findCiWorkflowFiles(root);
+  const text = files.map((relativePath) => readText(root, relativePath)).join("\n");
+  const missing = CI_WORKFLOW_REQUIREMENTS.filter(([, pattern]) => !pattern.test(text)).map(([name]) => name);
+
+  return {
+    files,
+    hasWorkflow: files.length > 0,
+    missing
+  };
+}
+
+function detailsForCiWorkflowCoverage(coverage) {
+  if (!coverage.hasWorkflow) {
+    return "Add a CI workflow that runs lint, typecheck, test, and rnvibe check.";
+  }
+
+  if (coverage.missing.length === 0) {
+    return `Covered by ${coverage.files.join(", ")}.`;
+  }
+
+  return `Missing CI checks: ${coverage.missing.join(", ")}.`;
 }
 
 function analyzeAgentGuidance(root) {
@@ -1268,6 +1322,7 @@ function actionFor(id) {
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     "vibe-check-script": "Add a package script such as \"check\": \"rnvibe check\" for CI readiness gates.",
+    "ci-workflow": "Add or update a CI workflow to run lint, typecheck, test, and rnvibe check.",
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
     "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",
     security: "Add security guidance that covers bundled secrets, token storage, logging, permissions, and network boundaries.",

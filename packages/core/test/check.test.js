@@ -238,6 +238,78 @@ test("checkProject passes when rnvibe check script is configured", () => {
   assert.equal(result.vibeCheckScript, "check");
 });
 
+test("checkProject warns when CI workflow misses required checks", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: {
+        lint: "echo lint",
+        typecheck: "echo typecheck",
+        test: "echo test",
+        check: "node packages/cli/bin/rnvibe.js check"
+      }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, ".github/workflows"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, ".github/workflows/ci.yml"),
+    "name: CI\njobs:\n  test:\n    steps:\n      - run: pnpm lint\n      - run: pnpm test\n"
+  );
+
+  const result = checkProject(root);
+  const ciCheck = result.checks.find((check) => check.id === "ci-workflow");
+
+  assert.equal(ciCheck.status, "warn");
+  assert.deepEqual(result.ciCoverage.files, [".github/workflows/ci.yml"]);
+  assert.ok(result.ciCoverage.missing.includes("typecheck"));
+  assert.ok(result.ciCoverage.missing.includes("rnvibe check"));
+  assert.match(ciCheck.details, /typecheck/);
+});
+
+test("checkProject passes when CI workflow runs required checks", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: {
+        lint: "echo lint",
+        typecheck: "echo typecheck",
+        test: "echo test",
+        check: "node packages/cli/bin/rnvibe.js check"
+      }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, ".github/workflows"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, ".github/workflows/ci.yml"),
+    [
+      "name: CI",
+      "jobs:",
+      "  test:",
+      "    steps:",
+      "      - run: pnpm lint",
+      "      - run: pnpm typecheck",
+      "      - run: pnpm test",
+      "      - run: pnpm check"
+    ].join("\n")
+  );
+
+  const result = checkProject(root);
+  const ciCheck = result.checks.find((check) => check.id === "ci-workflow");
+
+  assert.equal(ciCheck.status, "pass");
+  assert.deepEqual(result.ciCoverage.missing, []);
+});
+
 test("checkProject warns when security guidance misses required coverage", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(
