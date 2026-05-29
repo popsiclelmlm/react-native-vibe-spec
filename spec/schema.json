@@ -102,6 +102,33 @@
         }
       }
     },
+    "networkBoundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowedHosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tlsRequired": {
+          "type": "boolean"
+        },
+        "developmentCleartextHosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "disallowedSchemesOrDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "stateModel": {
       "type": "object",
       "additionalProperties": false,

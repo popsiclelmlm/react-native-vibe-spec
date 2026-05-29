@@ -23,6 +23,7 @@ test("initProject creates agent and template files", () => {
   assert.ok(fs.existsSync(path.join(root, ".github/copilot-instructions.md")));
   assert.ok(fs.existsSync(path.join(root, "templates/feature-spec.md")));
   assert.match(fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8"), /## State and Data Flow/);
+  assert.match(fs.readFileSync(path.join(root, "templates/feature-spec.md"), "utf8"), /## Network Boundaries/);
 });
 
 test("createFeature writes spec, plan, tasks, and acceptance files", () => {
@@ -55,6 +56,53 @@ test("checkProject reports obvious secret-like public names", () => {
 
   assert.equal(secretCheck.status, "fail");
   assert.equal(result.secretHits[0].name, "EXPO_PUBLIC_STRIPE_SECRET_KEY");
+});
+
+test("checkProject reports non-local cleartext HTTP endpoints", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, "src"), { recursive: true });
+  fs.writeFileSync(path.join(root, "src/api.ts"), 'export const baseUrl = "http://api.example.com/v1";');
+
+  const result = checkProject(root);
+  const networkCheck = result.checks.find((check) => check.id === "network-boundaries");
+
+  assert.equal(networkCheck.status, "fail");
+  assert.equal(result.cleartextNetworkHits[0].url, "http://api.example.com/v1");
+});
+
+test("checkProject allows local cleartext development endpoints", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, "src"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, "src/api.ts"),
+    'export const urls = ["http://localhost:3000", "http://127.0.0.1:8081", "http://10.0.2.2:3000"];'
+  );
+
+  const result = checkProject(root);
+  const networkCheck = result.checks.find((check) => check.id === "network-boundaries");
+
+  assert.equal(networkCheck.status, "pass");
+  assert.deepEqual(result.cleartextNetworkHits, []);
 });
 
 test("checkProject warns when detected state library is not documented", () => {

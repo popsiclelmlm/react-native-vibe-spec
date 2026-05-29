@@ -34,6 +34,20 @@
       "errors": "unauthorized, revoked, transient network failure"
     }
   ],
+  "networkBoundaries": {
+    "allowedHosts": [
+      "configured auth API host"
+    ],
+    "tlsRequired": true,
+    "developmentCleartextHosts": [
+      "localhost",
+      "Android emulator loopback"
+    ],
+    "disallowedSchemesOrDomains": [
+      "production cleartext HTTP",
+      "unapproved auth domains"
+    ]
+  },
   "stateAndDataFlow": {
     "stateLibraryOrFramework": "Redux Toolkit with RTK Query",
     "stateOwnershipByLayer": "auth slice owns session flags; RTK Query owns refresh request lifecycle; screens read selectors only",

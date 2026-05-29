@@ -6,7 +6,7 @@
 - Token storage
 - PII logging
 - Authentication
-- Network requests
+- Network requests and boundaries
 - Mobile permissions
 - Platform integrations
 
@@ -18,7 +18,9 @@
 - Do not log tokens, PII, one-time codes, headers, or sensitive payloads.
 - Request the minimum mobile permissions needed for the feature.
 - Document permission denial behavior.
-- Network requests must use TLS.
+- Production network requests must use TLS and target documented allowed hosts.
+- Cleartext HTTP is limited to documented local development endpoints such as localhost or Android emulator loopback.
+- Feature specs must name blocked schemes, disallowed domains, proxy boundaries, or third-party network surfaces when relevant.
 - Security-sensitive PRs need explicit review notes.
 
 ## Recommended Reading

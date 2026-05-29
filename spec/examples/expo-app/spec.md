@@ -32,6 +32,13 @@ Users can sign in with a phone number and one-time code, then return to the prot
 - `POST /auth/verify`
 - `POST /auth/refresh`
 
+## Network Boundaries
+
+- Allowed hosts: configured auth API host
+- TLS required: yes
+- Development-only cleartext hosts: localhost and Android emulator loopback only
+- Disallowed schemes or domains: production cleartext HTTP and unapproved auth domains
+
 ## Storage
 
 - Access token: memory only

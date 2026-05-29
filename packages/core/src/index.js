@@ -34,6 +34,9 @@ const TEXT_EXTENSIONS = new Set([
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
+const CLEARTEXT_HTTP_URL_RE = /\bhttp:\/\/[^\s"'`<>{}\[\])]+/gi;
+const LOCAL_CLEARTEXT_HOSTS = new Set(["localhost", "0.0.0.0", "10.0.2.2", "10.0.3.2", "::1"]);
+
 const STATE_DATA_LIBRARY_DEFINITIONS = [
   {
     id: "redux-toolkit",
@@ -184,6 +187,13 @@ Describe the user-visible outcome in one or two sentences.
 - Response shape:
 - Error shape:
 
+## Network Boundaries
+
+- Allowed hosts:
+- TLS required: yes
+- Development-only cleartext hosts:
+- Disallowed schemes or domains:
+
 ## State and Data Flow
 
 - State owner:
@@ -303,6 +313,7 @@ Describe the data flow from user action to UI update.
 - [ ] Android behavior has been verified or explicitly scoped out.
 - [ ] Loading, error, empty, and offline states are covered.
 - [ ] Accessibility labels and touch targets are reviewed.
+- [ ] Network hosts use HTTPS unless explicitly scoped to local development.
 - [ ] No secrets, tokens, or PII are logged or stored unsafely.
 - [ ] Tests cover the changed behavior.
 - [ ] Release, rollback, and observability impact are documented.
@@ -338,7 +349,8 @@ This project follows react-native-vibe-spec v0.1.
 - Treat public environment variables as bundled client data.
 - Store sensitive user tokens only through an approved secure storage mechanism.
 - Do not log PII, tokens, headers, one-time passwords, or full API payloads.
-- Use TLS for network requests.
+- Use TLS for production network requests and document allowed hosts.
+- Limit cleartext HTTP to documented local development endpoints.
 - Request the minimum mobile permissions needed for the feature.
 - Document authentication, storage, networking, and permission changes in the feature spec.
 `,
@@ -359,6 +371,7 @@ This project follows react-native-vibe-spec v0.1.
 - [ ] Architecture, navigation, state, storage, and API changes are documented.
 - [ ] iOS and Android behavior are both considered.
 - [ ] Loading, error, empty, offline, and permission-denied states are handled.
+- [ ] Network hosts, TLS requirements, and any development-only cleartext exceptions are documented.
 - [ ] No secrets, tokens, PII, or sensitive payloads are logged or bundled.
 - [ ] Unit/integration/E2E coverage matches the risk of the change.
 - [ ] Release and rollback impact are documented.
@@ -568,6 +581,17 @@ export function checkProject(root = process.cwd()) {
     12
   );
 
+  const cleartextNetworkHits = scanForCleartextNetworkUrls(root);
+  add(
+    "network-boundaries",
+    "No non-local cleartext HTTP endpoints detected",
+    cleartextNetworkHits.length === 0 ? "pass" : "fail",
+    cleartextNetworkHits.length === 0
+      ? "No non-local http:// endpoints were found in app code or config."
+      : cleartextNetworkHits.slice(0, 5).map((hit) => `${hit.file}:${hit.line} ${hit.url}`).join("; "),
+    8
+  );
+
   add(
     "copilot-instructions",
     "Copilot instructions found",
@@ -584,7 +608,8 @@ export function checkProject(root = process.cwd()) {
     checks,
     score: calculateScore(checks),
     featureSpecs,
-    secretHits
+    secretHits,
+    cleartextNetworkHits
   };
 }
 
@@ -778,6 +803,47 @@ function scanForSecretNames(root) {
   return hits;
 }
 
+function scanForCleartextNetworkUrls(root) {
+  const hits = [];
+  const files = walkFiles(root, (relativePath) => TEXT_EXTENSIONS.has(path.extname(relativePath)));
+  for (const relativePath of files) {
+    if (shouldIgnoreFileForSecrets(relativePath)) continue;
+    const absolutePath = path.join(root, relativePath);
+    let text = "";
+    try {
+      const stat = fs.statSync(absolutePath);
+      if (stat.size > 512_000) continue;
+      text = fs.readFileSync(absolutePath, "utf8");
+    } catch {
+      continue;
+    }
+    const lines = text.split(/\r?\n/);
+    for (let index = 0; index < lines.length; index += 1) {
+      for (const match of lines[index].matchAll(CLEARTEXT_HTTP_URL_RE)) {
+        const url = normalizeMatchedUrl(match[0]);
+        if (!isAllowedLocalCleartextUrl(url)) {
+          hits.push({ file: relativePath, line: index + 1, url });
+        }
+      }
+    }
+  }
+  return hits;
+}
+
+function normalizeMatchedUrl(url) {
+  return url.replace(/[),.;!?]+$/g, "");
+}
+
+function isAllowedLocalCleartextUrl(url) {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    return LOCAL_CLEARTEXT_HOSTS.has(hostname) || hostname.startsWith("127.");
+  } catch {
+    return false;
+  }
+}
+
 function shouldIgnoreFileForSecrets(relativePath) {
   const normalized = relativePath.split(path.sep).join("/");
   return (
@@ -854,6 +920,7 @@ function actionFor(id) {
     security: "Add SECURITY.md or docs/security.md.",
     release: "Add templates/release-checklist.md or docs/release.md.",
     secrets: "Move secret-like values out of bundled code and public env names.",
+    "network-boundaries": "Replace non-local http:// endpoints with HTTPS or document a local-only development boundary.",
     "copilot-instructions": "Run rnvibe generate agents --agent copilot."
   };
   return actions[id] ?? "Review this check and update the project.";

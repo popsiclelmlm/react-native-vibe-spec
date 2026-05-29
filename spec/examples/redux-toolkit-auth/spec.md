@@ -31,6 +31,13 @@ Signed-in users keep their session during normal app use, and expired sessions r
 - Response shape: access token, refresh token rotation metadata, expiry
 - Error shape: unauthorized, revoked, transient network failure
 
+## Network Boundaries
+
+- Allowed hosts: configured auth API host
+- TLS required: yes
+- Development-only cleartext hosts: localhost and Android emulator loopback only
+- Disallowed schemes or domains: production cleartext HTTP and unapproved auth domains
+
 ## State and Data Flow
 
 - State library or framework: Redux Toolkit with RTK Query

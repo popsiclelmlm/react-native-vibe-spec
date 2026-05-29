@@ -16,7 +16,7 @@ This project is not another app generator or boilerplate. It gives AI agents a p
 - AI agent instructions through `AGENTS.md`
 - Architecture, navigation, state, UI, accessibility, performance, security, testing, and release rules
 - Framework-specific data-flow specs for Redux Toolkit, Zustand, MobX, and related state/data libraries
-- CLI validation with `rnvibe check`
+- CLI validation with `rnvibe check`, including secret-name and network-boundary signals
 - Feature workflow scaffolding with `rnvibe new feature`
 - ESLint and TypeScript preset packages
 - Agent instruction package and planned MCP server
@@ -76,7 +76,8 @@ React Native Vibe Spec Check
 △ E2E test command found
 ✓ State/data-flow decision documented
 ✓ No obvious secret names detected
-Score: 93/100
+✓ No non-local cleartext HTTP endpoints detected
+Score: 94/100
 ```
 
 ## Repository Map

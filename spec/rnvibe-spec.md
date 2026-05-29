@@ -60,6 +60,7 @@ A compliant feature spec must name:
 - Optional web behavior
 - Navigation and deep-link impact
 - Data contracts
+- Network boundaries, allowed hosts, TLS, and cleartext exceptions
 - Client, server, form, and persisted state boundaries
 - State/data-flow framework, when shared state is involved
 - Offline, loading, error, empty, and permission-denied states when relevant
@@ -81,6 +82,7 @@ A compliant feature spec must name:
 - Security checklist
 - Release checklist
 - Obvious secret-like variable names
+- Non-local cleartext HTTP endpoints
 - Optional agent-specific instructions
 
 The score is a readiness signal, not a security guarantee.

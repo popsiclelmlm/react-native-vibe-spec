@@ -32,6 +32,13 @@ Describe the user-visible outcome in one or two sentences.
 - Response shape:
 - Error shape:
 
+## Network Boundaries
+
+- Allowed hosts:
+- TLS required: yes
+- Development-only cleartext hosts:
+- Disallowed schemes or domains:
+
 ## State and Data Flow
 
 - State library or framework:
