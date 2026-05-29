@@ -80,7 +80,7 @@ A compliant feature spec must name:
 - Quality scripts
 - E2E script
 - Security guidance coverage
-- Release checklist
+- Release guidance coverage
 - Obvious secret-like variable names
 - Non-local cleartext HTTP endpoints
 - Optional agent-specific instructions

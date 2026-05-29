@@ -11,6 +11,7 @@
 
 ## Rules
 
+- Release guidance must cover version/build numbers, migration impact, OTA/update channels, observability or crash monitoring, rollback, and store review impact.
 - Release impact must be included in the feature plan for user-facing changes.
 - Native config changes must be called out because they can affect build and store review.
 - OTA updates must not assume native code or asset availability that is not already shipped.

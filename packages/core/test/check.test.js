@@ -112,6 +112,63 @@ test("checkProject passes when security guidance covers required topics", () => 
   assert.deepEqual(result.securityCoverage.missing, []);
 });
 
+test("checkProject warns when release guidance misses required coverage", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, "templates"), { recursive: true });
+  fs.writeFileSync(path.join(root, "templates/release-checklist.md"), "# Release\n\n- [ ] Version and build number updated.");
+
+  const result = checkProject(root);
+  const releaseCheck = result.checks.find((check) => check.id === "release");
+
+  assert.equal(releaseCheck.status, "warn");
+  assert.deepEqual(result.releaseCoverage.files, ["templates/release-checklist.md"]);
+  assert.ok(result.releaseCoverage.missing.includes("rollback path"));
+  assert.match(releaseCheck.details, /rollback path/);
+});
+
+test("checkProject passes when release guidance covers required topics", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  fs.mkdirSync(path.join(root, "docs"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, "docs/release.md"),
+    [
+      "# Release",
+      "Version and build numbers are updated before release.",
+      "OTA update channel impact is documented.",
+      "Migration impact is documented.",
+      "Crash monitoring and observability checks are completed.",
+      "Rollback path is known.",
+      "App Store and Play Store review notes are updated."
+    ].join("\n")
+  );
+
+  const result = checkProject(root);
+  const releaseCheck = result.checks.find((check) => check.id === "release");
+
+  assert.equal(releaseCheck.status, "pass");
+  assert.deepEqual(result.releaseCoverage.missing, []);
+});
+
 test("checkProject reports non-local cleartext HTTP endpoints", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

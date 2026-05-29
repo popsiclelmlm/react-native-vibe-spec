@@ -65,6 +65,39 @@ const SECURITY_COVERAGE_REQUIREMENTS = [
   }
 ];
 
+const RELEASE_COVERAGE_REQUIREMENTS = [
+  {
+    id: "version-build",
+    name: "version and build numbers",
+    patterns: [/\bversion/i, /\bbuild\b/i]
+  },
+  {
+    id: "ota-update-channels",
+    name: "OTA/update channels",
+    patterns: [/\b(?:ota|over-the-air|update[- ]channel|channel)\b/i]
+  },
+  {
+    id: "migration-impact",
+    name: "migration impact",
+    patterns: [/\bmigration/i]
+  },
+  {
+    id: "observability-crash-monitoring",
+    name: "observability or crash monitoring",
+    patterns: [/\b(?:observability|monitoring|crash)\b/i]
+  },
+  {
+    id: "rollback-path",
+    name: "rollback path",
+    patterns: [/\brollback\b/i]
+  },
+  {
+    id: "store-review",
+    name: "store review impact",
+    patterns: [/\b(?:app store|play store|store review)\b/i]
+  }
+];
+
 const STATE_DATA_LIBRARY_DEFINITIONS = [
   {
     id: "redux-toolkit",
@@ -392,6 +425,7 @@ This project follows react-native-vibe-spec v0.1.
 - [ ] Crash and error monitoring are checked.
 - [ ] Rollback path is known.
 - [ ] App Store / Play Store review notes are updated, if applicable.
+- [ ] Feature flags or staged rollout settings are documented, if applicable.
 `,
   prChecklist: `## React Native Vibe Spec Review
 
@@ -587,13 +621,12 @@ export function checkProject(root = process.cwd()) {
     8
   );
 
+  const releaseCoverage = analyzeReleaseGuidance(root);
   add(
     "release",
-    "Release checklist found",
-    fileExists(root, "templates/release-checklist.md") || fileExists(root, "docs/release.md") || fileExists(root, "rules/release.md")
-      ? "pass"
-      : "warn",
-    "Release rules should cover versioning, OTA/update channels, rollback, and store review impact.",
+    "Release guidance covers required topics",
+    releaseCoverage.hasGuidance && releaseCoverage.missing.length === 0 ? "pass" : "warn",
+    detailsForReleaseCoverage(releaseCoverage),
     8
   );
 
@@ -636,6 +669,7 @@ export function checkProject(root = process.cwd()) {
     score: calculateScore(checks),
     featureSpecs,
     securityCoverage,
+    releaseCoverage,
     secretHits,
     cleartextNetworkHits
   };
@@ -823,6 +857,34 @@ function detailsForSecurityCoverage(coverage) {
   return `Missing coverage: ${coverage.missing.join(", ")}.`;
 }
 
+function analyzeReleaseGuidance(root) {
+  const files = ["docs/release.md", "rules/release.md", "templates/release-checklist.md"].filter((relativePath) =>
+    fileExists(root, relativePath)
+  );
+  const text = files.map((relativePath) => readText(root, relativePath)).join("\n");
+  const missing = RELEASE_COVERAGE_REQUIREMENTS.filter((requirement) =>
+    !requirement.patterns.every((pattern) => pattern.test(text))
+  ).map((requirement) => requirement.name);
+
+  return {
+    files,
+    hasGuidance: files.length > 0,
+    missing
+  };
+}
+
+function detailsForReleaseCoverage(coverage) {
+  if (!coverage.hasGuidance) {
+    return "Add docs/release.md, rules/release.md, or templates/release-checklist.md with version/build, OTA/update channels, migration, monitoring, rollback, and store review coverage.";
+  }
+
+  if (coverage.missing.length === 0) {
+    return `Covered by ${coverage.files.join(", ")}.`;
+  }
+
+  return `Missing coverage: ${coverage.missing.join(", ")}.`;
+}
+
 function findFeatureSpecs(root) {
   return walkFiles(root, (relativePath) => {
     const normalized = relativePath.split(path.sep).join("/");
@@ -974,7 +1036,7 @@ function actionFor(id) {
     e2e: "Add a Detox, Maestro, Playwright, or Appium E2E command for critical flows.",
     "state-data-flow": "Document detected state/data-flow libraries in docs/architecture.md and the relevant feature spec.",
     security: "Add security guidance that covers bundled secrets, token storage, logging, permissions, and network boundaries.",
-    release: "Add templates/release-checklist.md or docs/release.md.",
+    release: "Add release guidance that covers version/build numbers, OTA/update channels, migration, monitoring, rollback, and store review impact.",
     secrets: "Move secret-like values out of bundled code and public env names.",
     "network-boundaries": "Replace non-local http:// endpoints with HTTPS or document a local-only development boundary.",
     "copilot-instructions": "Run rnvibe generate agents --agent copilot."

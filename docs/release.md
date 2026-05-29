@@ -14,6 +14,7 @@ The MCP and doctor packages are placeholders until their behavior is implemented
 
 ## Release Checklist
 
+- [ ] Release guidance covers version/build numbers, migration, OTA/update channels, observability or crash monitoring, rollback, and store review impact.
 - [ ] Version updated consistently.
 - [ ] Changelog updated.
 - [ ] CLI smoke test completed.
