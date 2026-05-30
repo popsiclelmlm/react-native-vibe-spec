@@ -718,7 +718,7 @@ export function checkProject(root = process.cwd()) {
     6
   );
 
-  const ciCoverage = analyzeCiWorkflowCoverage(root);
+  const ciCoverage = analyzeCiWorkflowCoverage(root, project);
   add(
     "ci-workflow",
     "CI workflow runs required checks",
@@ -975,10 +975,11 @@ function findCiWorkflowFiles(root) {
   });
 }
 
-function analyzeCiWorkflowCoverage(root) {
+function analyzeCiWorkflowCoverage(root, project) {
   const files = findCiWorkflowFiles(root);
   const text = files.map((relativePath) => readText(root, relativePath)).join("\n");
-  const missing = CI_WORKFLOW_REQUIREMENTS.filter(([, pattern]) => !pattern.test(text)).map(([name]) => name);
+  const requirements = [...CI_WORKFLOW_REQUIREMENTS, ...ciPackageManagerRequirements(project)];
+  const missing = requirements.filter(([, pattern]) => !pattern.test(text)).map(([name]) => name);
 
   return {
     files,
@@ -997,6 +998,27 @@ function detailsForCiWorkflowCoverage(coverage) {
   }
 
   return `Missing CI checks: ${coverage.missing.join(", ")}.`;
+}
+
+function ciPackageManagerRequirements(project) {
+  const packageManager = project.packageJson?.packageManager;
+  const match = /^(pnpm|yarn)@(.+)$/.exec(String(packageManager ?? ""));
+  if (!match) {
+    return [];
+  }
+
+  const [, manager, version] = match;
+  const escapedVersion = escapeRegExp(version);
+  return [
+    [
+      `${manager} ${version}`,
+      new RegExp(`\\bversion:\\s*["']?${escapedVersion}["']?\\b|\\b${manager}@${escapedVersion}\\b`, "i")
+    ]
+  ];
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function analyzeAgentGuidance(root) {

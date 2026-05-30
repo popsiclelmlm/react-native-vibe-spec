@@ -218,6 +218,7 @@ test("checkProject passes when rnvibe check script is configured", () => {
   fs.writeFileSync(
     path.join(root, "package.json"),
     JSON.stringify({
+      packageManager: "pnpm@9.15.0",
       dependencies: { expo: "latest", typescript: "latest" },
       scripts: {
         lint: "echo lint",
@@ -243,6 +244,7 @@ test("checkProject warns when CI workflow misses required checks", () => {
   fs.writeFileSync(
     path.join(root, "package.json"),
     JSON.stringify({
+      packageManager: "pnpm@9.15.0",
       dependencies: { expo: "latest", typescript: "latest" },
       scripts: {
         lint: "echo lint",
@@ -267,6 +269,7 @@ test("checkProject warns when CI workflow misses required checks", () => {
   assert.equal(ciCheck.status, "warn");
   assert.deepEqual(result.ciCoverage.files, [".github/workflows/ci.yml"]);
   assert.ok(result.ciCoverage.missing.includes("frozen install"));
+  assert.ok(result.ciCoverage.missing.includes("pnpm 9.15.0"));
   assert.ok(result.ciCoverage.missing.includes("typecheck"));
   assert.ok(result.ciCoverage.missing.includes("rnvibe check"));
   assert.match(ciCheck.details, /frozen install/);
@@ -277,6 +280,7 @@ test("checkProject passes when CI workflow runs required checks", () => {
   fs.writeFileSync(
     path.join(root, "package.json"),
     JSON.stringify({
+      packageManager: "pnpm@9.15.0",
       dependencies: { expo: "latest", typescript: "latest" },
       scripts: {
         lint: "echo lint",
@@ -297,6 +301,9 @@ test("checkProject passes when CI workflow runs required checks", () => {
       "jobs:",
       "  test:",
       "    steps:",
+      "      - uses: pnpm/action-setup@v4",
+      "        with:",
+      "          version: 9.15.0",
       "      - run: pnpm install --frozen-lockfile",
       "      - run: pnpm lint",
       "      - run: pnpm typecheck",
