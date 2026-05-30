@@ -158,6 +158,12 @@ const CI_WORKFLOW_REQUIREMENTS = [
   ]
 ];
 
+const PACKAGE_MANAGER_LOCKFILES = {
+  npm: "package-lock.json",
+  pnpm: "pnpm-lock.yaml",
+  yarn: "yarn.lock"
+};
+
 const SECRET_NAME_RE =
   /\b(?:EXPO_PUBLIC_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*|(?:API|AUTH|ACCESS|REFRESH|STRIPE|FIREBASE|SUPABASE|SENTRY)_[A-Z0-9_]*(?:SECRET|PRIVATE|TOKEN|PASSWORD)[A-Z0-9_]*)\b/g;
 
@@ -646,6 +652,15 @@ export function checkProject(root = process.cwd()) {
     5
   );
 
+  const packageManagerLock = analyzePackageManagerLock(root, project);
+  add(
+    "package-manager-lockfile",
+    "Package manager and lockfile pinned",
+    packageManagerLock.missing.length === 0 ? "pass" : "warn",
+    detailsForPackageManagerLock(packageManagerLock),
+    6
+  );
+
   add(
     "react-native",
     "React Native or Expo project detected",
@@ -810,6 +825,7 @@ export function checkProject(root = process.cwd()) {
     project,
     checks,
     score: calculateScore(checks),
+    packageManagerLock,
     featureSpecs,
     featureSpecCoverage,
     agentGuidance,
@@ -956,6 +972,36 @@ function detectStateDataLibraries(dependencies) {
     packageNames: definition.packageNames.filter(hasPackage),
     terms: definition.terms
   }));
+}
+
+function analyzePackageManagerLock(root, project) {
+  const packageManager = project.packageJson?.packageManager;
+  const match = /^(npm|pnpm|yarn)@(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/.exec(String(packageManager ?? ""));
+  const manager = match?.[1] ?? null;
+  const lockfile = manager ? PACKAGE_MANAGER_LOCKFILES[manager] : null;
+  const missing = [];
+
+  if (!match) {
+    missing.push("exact packageManager version");
+  }
+  if (lockfile && !fileExists(root, lockfile)) {
+    missing.push(lockfile);
+  }
+
+  return {
+    packageManager: packageManager ?? null,
+    manager,
+    lockfile,
+    missing
+  };
+}
+
+function detailsForPackageManagerLock(coverage) {
+  if (coverage.missing.length === 0) {
+    return `${coverage.packageManager} with ${coverage.lockfile}.`;
+  }
+
+  return `Missing: ${coverage.missing.join(", ")}.`;
 }
 
 function findVibeCheckScript(scripts) {
@@ -1341,6 +1387,7 @@ function symbolFor(status) {
 function actionFor(id) {
   const actions = {
     "package-json": "Initialize a package.json for the project.",
+    "package-manager-lockfile": "Set an exact packageManager version and commit the matching lockfile.",
     "react-native": "Install or document the target React Native or Expo runtime.",
     typescript: "Add TypeScript and a strict tsconfig.json.",
     agents: "Update AGENTS.md with spec workflow, platform behavior, security constraints, quality commands, and rnvibe check.",

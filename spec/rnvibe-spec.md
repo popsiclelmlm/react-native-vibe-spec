@@ -73,6 +73,7 @@ A compliant feature spec must name:
 `rnvibe check` scores readiness from 0 to 100. The initial score covers:
 
 - React Native or Expo detection
+- Package manager and lockfile pinning
 - TypeScript
 - `AGENTS.md`
 - Feature spec coverage

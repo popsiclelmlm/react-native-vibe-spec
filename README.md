@@ -70,6 +70,7 @@ Example output:
 
 ```text
 React Native Vibe Spec Check
+✓ Package manager and lockfile pinned
 ✓ TypeScript configured
 ✓ AGENTS.md covers required guidance
 ✓ Feature specs cover required sections

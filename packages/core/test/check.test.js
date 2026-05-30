@@ -38,6 +38,51 @@ test("createFeature writes spec, plan, tasks, and acceptance files", () => {
   assert.ok(fs.existsSync(path.join(root, "features/auth-login/acceptance.md")));
 });
 
+test("checkProject warns when package manager is not exactly pinned", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      packageManager: "pnpm@9",
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+
+  const result = checkProject(root);
+  const packageManagerCheck = result.checks.find((check) => check.id === "package-manager-lockfile");
+
+  assert.equal(packageManagerCheck.status, "warn");
+  assert.ok(result.packageManagerLock.missing.includes("exact packageManager version"));
+  assert.match(packageManagerCheck.details, /exact packageManager version/);
+});
+
+test("checkProject passes when package manager and lockfile are pinned", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      packageManager: "pnpm@9.15.0",
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "pnpm-lock.yaml"), "lockfileVersion: '9.0'\n");
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+
+  const result = checkProject(root);
+  const packageManagerCheck = result.checks.find((check) => check.id === "package-manager-lockfile");
+
+  assert.equal(packageManagerCheck.status, "pass");
+  assert.deepEqual(result.packageManagerLock.missing, []);
+  assert.equal(result.packageManagerLock.lockfile, "pnpm-lock.yaml");
+});
+
 test("checkProject warns when AGENTS.md misses required guidance", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(
