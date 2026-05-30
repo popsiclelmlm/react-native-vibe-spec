@@ -37,6 +37,16 @@ function platformSupportLinePattern(platform) {
   return new RegExp(`^-\\s*${platform}:\\s*${PLATFORM_SUPPORT_VALUE_PATTERN}\\s*$`, "im");
 }
 
+const PR_REVIEW_REQUIREMENTS = [
+  ["spec artifacts", /Feature spec, plan, tasks, and acceptance checklist/],
+  ["platform behavior", /iOS and Android behavior/],
+  ["UX state review", /Loading, error, empty, offline, and permission-denied states/],
+  ["network boundary review", /Network hosts, TLS requirements/],
+  ["secret and PII review", /No secrets, tokens, PII/],
+  ["test coverage", /Unit\/integration\/E2E coverage/],
+  ["release and rollback", /Release and rollback impact/]
+];
+
 const TEMPLATE_COVERAGE_REQUIREMENTS = [
   {
     file: "templates/feature-spec.md",
@@ -96,14 +106,7 @@ const TEMPLATE_COVERAGE_REQUIREMENTS = [
   {
     file: "templates/pr-review.md",
     title: "PR review template",
-    requirements: [
-      ["spec artifacts", /Feature spec, plan, tasks, and acceptance checklist/],
-      ["platform behavior", /iOS and Android behavior/],
-      ["network boundary review", /Network hosts, TLS requirements/],
-      ["secret and PII review", /No secrets, tokens, PII/],
-      ["test coverage", /Unit\/integration\/E2E coverage/],
-      ["release and rollback", /Release and rollback impact/]
-    ]
+    requirements: PR_REVIEW_REQUIREMENTS
   },
   {
     file: "templates/release-checklist.md",
@@ -725,6 +728,15 @@ export function checkProject(root = process.cwd()) {
     8
   );
 
+  const pullRequestTemplateCoverage = analyzePullRequestTemplateCoverage(root);
+  add(
+    "pull-request-template",
+    "Pull request template covers review gates",
+    pullRequestTemplateCoverage.hasTemplate && pullRequestTemplateCoverage.missing.length === 0 ? "pass" : "warn",
+    detailsForPullRequestTemplateCoverage(pullRequestTemplateCoverage),
+    5
+  );
+
   const missingScripts = ["lint", "typecheck", "test"].filter((script) => !project.scripts[script]);
   add(
     "quality-scripts",
@@ -844,6 +856,7 @@ export function checkProject(root = process.cwd()) {
     vibeCheckScript,
     ciCoverage,
     templateCoverage,
+    pullRequestTemplateCoverage,
     securityCoverage,
     releaseCoverage,
     secretHits,
@@ -1151,6 +1164,38 @@ function detailsForTemplateCoverage(coverage) {
     .join("; ");
 }
 
+function analyzePullRequestTemplateCoverage(root) {
+  const file = ".github/PULL_REQUEST_TEMPLATE.md";
+  if (!fileExists(root, file)) {
+    return {
+      file,
+      hasTemplate: false,
+      missing: PR_REVIEW_REQUIREMENTS.map(([name]) => name)
+    };
+  }
+
+  const text = readText(root, file);
+  const missing = PR_REVIEW_REQUIREMENTS.filter(([, pattern]) => !pattern.test(text)).map(([name]) => name);
+
+  return {
+    file,
+    hasTemplate: true,
+    missing
+  };
+}
+
+function detailsForPullRequestTemplateCoverage(coverage) {
+  if (!coverage.hasTemplate) {
+    return "Add .github/PULL_REQUEST_TEMPLATE.md with spec artifacts, platform, UX state, network, security, test, and release review gates.";
+  }
+
+  if (coverage.missing.length === 0) {
+    return `${coverage.file} covers required review gates.`;
+  }
+
+  return `${coverage.file} missing ${coverage.missing.join(", ")}.`;
+}
+
 function detailsForStateDataFlow(detected, documented, hasArchitectureDoc) {
   if (detected.length === 0) {
     return "No common state/data-flow libraries detected.";
@@ -1405,6 +1450,7 @@ function actionFor(id) {
     agents: "Update AGENTS.md with spec workflow, platform behavior, security constraints, quality commands, and rnvibe check.",
     "feature-specs": "Create or update feature specs with user outcome, platform support statuses, UX states, navigation, data contracts, tests, and acceptance criteria.",
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
+    "pull-request-template": "Add or update .github/PULL_REQUEST_TEMPLATE.md with required review gates.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     "vibe-check-script": "Add a package script such as \"check\": \"rnvibe check\" for CI readiness gates.",
     "ci-workflow": "Add or update a CI workflow to use a frozen install and run lint, typecheck, test, and rnvibe check.",

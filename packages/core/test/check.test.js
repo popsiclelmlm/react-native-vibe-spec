@@ -293,6 +293,55 @@ test("checkProject passes when templates cover required sections", () => {
   assert.deepEqual(result.templateCoverage.missingCoverage, []);
 });
 
+test("checkProject warns when the pull request template misses review gates", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  initProject(root, { force: true });
+  fs.writeFileSync(
+    path.join(root, ".github/PULL_REQUEST_TEMPLATE.md"),
+    "## Review\n\n- [ ] Feature spec, plan, tasks, and acceptance checklist are present or not needed.\n"
+  );
+
+  const result = checkProject(root);
+  const pullRequestTemplateCheck = result.checks.find((check) => check.id === "pull-request-template");
+
+  assert.equal(pullRequestTemplateCheck.status, "warn");
+  assert.equal(result.pullRequestTemplateCoverage.file, ".github/PULL_REQUEST_TEMPLATE.md");
+  assert.ok(result.pullRequestTemplateCoverage.missing.includes("platform behavior"));
+  assert.ok(result.pullRequestTemplateCoverage.missing.includes("UX state review"));
+  assert.match(pullRequestTemplateCheck.details, /platform behavior/);
+});
+
+test("checkProject passes when the pull request template covers review gates", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(path.join(root, "features/auth-login/spec.md"), "# Spec");
+  initProject(root, { force: true });
+
+  const result = checkProject(root);
+  const pullRequestTemplateCheck = result.checks.find((check) => check.id === "pull-request-template");
+
+  assert.equal(pullRequestTemplateCheck.status, "pass");
+  assert.deepEqual(result.pullRequestTemplateCoverage.missing, []);
+});
+
 test("checkProject warns when no rnvibe check script is configured", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

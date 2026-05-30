@@ -79,6 +79,7 @@ A compliant feature spec must name:
 - `AGENTS.md`
 - Feature spec coverage
 - Template coverage
+- Pull request review gate coverage
 - Quality scripts
 - Vibe spec check script
 - CI workflow coverage

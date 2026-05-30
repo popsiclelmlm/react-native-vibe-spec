@@ -75,6 +75,7 @@ React Native Vibe Spec Check
 ✓ AGENTS.md covers required guidance
 ✓ Feature specs cover required sections
 ✓ Spec templates cover required sections
+✓ Pull request template covers review gates
 ✓ Vibe spec check script configured
 ✓ CI workflow runs required checks
 △ E2E test command found
@@ -83,7 +84,7 @@ React Native Vibe Spec Check
 ✓ Release guidance covers required topics
 ✓ No obvious secret names detected
 ✓ No non-local cleartext HTTP endpoints detected
-Score: 94/100
+Score: 95/100
 ```
 
 ## Repository Map
