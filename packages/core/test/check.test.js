@@ -146,6 +146,62 @@ test("checkProject warns when feature specs miss required sections", () => {
   assert.match(featureSpecCheck.details, /Platforms/);
 });
 
+test("checkProject warns when feature specs miss explicit platform statuses", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
+  fs.writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      dependencies: { expo: "latest", typescript: "latest" },
+      scripts: { lint: "echo lint", typecheck: "echo typecheck", test: "echo test" }
+    })
+  );
+  fs.writeFileSync(path.join(root, "AGENTS.md"), "# Agents");
+  fs.mkdirSync(path.join(root, "features/auth-login"), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, "features/auth-login/spec.md"),
+    `# Feature Spec: Auth Login
+
+## User Outcome
+
+Login.
+
+## Platforms
+
+- iOS: yes
+- Android: required
+
+## UX States
+
+- success
+
+## Navigation Impact
+
+- Adds route:
+
+## Data Contract
+
+- Endpoint or local source:
+
+## Tests Required
+
+- Unit:
+
+## Acceptance Criteria
+
+- [ ] Works on iOS.
+`
+  );
+
+  const result = checkProject(root);
+  const featureSpecCheck = result.checks.find((check) => check.id === "feature-specs");
+  const missing = result.featureSpecCoverage.missingCoverage[0].missing;
+
+  assert.equal(featureSpecCheck.status, "warn");
+  assert.ok(missing.includes("iOS platform status"));
+  assert.ok(missing.includes("Web platform status"));
+  assert.match(featureSpecCheck.details, /iOS platform status/);
+});
+
 test("checkProject passes when feature specs cover required sections", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "rnvibe-"));
   fs.writeFileSync(

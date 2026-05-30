@@ -31,6 +31,12 @@ const TEXT_EXTENSIONS = new Set([
   ".yml"
 ]);
 
+const PLATFORM_SUPPORT_VALUE_PATTERN = "(?:required|optional|not-supported)";
+
+function platformSupportLinePattern(platform) {
+  return new RegExp(`^-\\s*${platform}:\\s*${PLATFORM_SUPPORT_VALUE_PATTERN}\\s*$`, "im");
+}
+
 const TEMPLATE_COVERAGE_REQUIREMENTS = [
   {
     file: "templates/feature-spec.md",
@@ -38,6 +44,9 @@ const TEMPLATE_COVERAGE_REQUIREMENTS = [
     requirements: [
       ["User Outcome", /## User Outcome/],
       ["Platforms", /## Platforms/],
+      ["iOS platform status", platformSupportLinePattern("iOS")],
+      ["Android platform status", platformSupportLinePattern("Android")],
+      ["Web platform status", platformSupportLinePattern("Web")],
       ["UX States", /## UX States/],
       ["Navigation Impact", /## Navigation Impact/],
       ["Data Contract", /## Data Contract/],
@@ -114,6 +123,9 @@ const TEMPLATE_COVERAGE_REQUIREMENTS = [
 const FEATURE_SPEC_COVERAGE_REQUIREMENTS = [
   ["User Outcome", /## User Outcome/],
   ["Platforms", /## Platforms/],
+  ["iOS platform status", platformSupportLinePattern("iOS")],
+  ["Android platform status", platformSupportLinePattern("Android")],
+  ["Web platform status", platformSupportLinePattern("Web")],
   ["UX States", /## UX States/],
   ["Navigation Impact", /## Navigation Impact/],
   ["Data Contract", /## Data Contract/],
@@ -1391,7 +1403,7 @@ function actionFor(id) {
     "react-native": "Install or document the target React Native or Expo runtime.",
     typescript: "Add TypeScript and a strict tsconfig.json.",
     agents: "Update AGENTS.md with spec workflow, platform behavior, security constraints, quality commands, and rnvibe check.",
-    "feature-specs": "Create or update feature specs with user outcome, platforms, UX states, navigation, data contracts, tests, and acceptance criteria.",
+    "feature-specs": "Create or update feature specs with user outcome, platform support statuses, UX states, navigation, data contracts, tests, and acceptance criteria.",
     templates: "Run rnvibe init to restore standard templates with required spec, plan, task, review, and release coverage.",
     "quality-scripts": "Add lint, typecheck, and test scripts to package.json.",
     "vibe-check-script": "Add a package script such as \"check\": \"rnvibe check\" for CI readiness gates.",

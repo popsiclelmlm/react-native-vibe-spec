@@ -55,9 +55,10 @@ For app-level state/data-flow changes:
 
 A compliant feature spec must name:
 
-- iOS behavior
-- Android behavior
-- Optional web behavior
+- iOS support status and behavior
+- Android support status and behavior
+- Web support status and optional web behavior
+- Platform support values as `required`, `optional`, or `not-supported`
 - Navigation and deep-link impact
 - Data contracts
 - Network boundaries, allowed hosts, TLS, and cleartext exceptions

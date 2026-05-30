@@ -46,7 +46,7 @@ npx --yes pnpm@9.15.0 install
 
 ## Workflow
 
-1. Specify the user outcome, platforms, UX states, data contracts, storage, permissions, and acceptance criteria.
+1. Specify the user outcome, platform support statuses, UX states, data contracts, storage, permissions, and acceptance criteria.
 2. Plan architecture, dependencies, state, API flow, risks, and verification.
 3. Break the plan into small tasks.
 4. Implement one coherent task at a time.
